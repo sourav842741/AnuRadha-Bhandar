@@ -99,6 +99,7 @@ const cartSlice = createSlice({
 
       // 🚚 Delivery Fee rule
       state.deliveryFee = state.subtotal >= 100 ? 0 : 40;
+      
 
       // 💰 Final Total
       state.finalTotal = state.subtotal + state.deliveryFee;
@@ -116,3 +117,5 @@ export const {
 } = cartSlice.actions;
 
 export default cartSlice.reducer;
+
+

@@ -21,7 +21,7 @@ const slides = [
     title: "Fresh Organic Groceries 🥦",
     subtitle: "Farm-fresh fruits, vegetables, and daily essentials delivered to you.",
     btnText: "Shop Now",
-    bg: "https://plus.unsplash.com/premium_photo-1663012860167-220d9d9c8aca?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1770",
+    bg: "https://res.cloudinary.com/dm9hpyepi/image/upload/v1765042711/Screenshot_2025-12-06_230420_taahup.png",
   },
   {
     id: 2,
@@ -29,7 +29,7 @@ const slides = [
     title: "Fast & Reliable Delivery 🚚",
     subtitle: "We ensure your groceries reach your doorstep in no time.",
     btnText: "Order Now",
-    bg: "https://images.unsplash.com/photo-1616915939238-2a7a363d45c4?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1769",
+    bg: "https://res.cloudinary.com/dm9hpyepi/image/upload/v1765043020/Screenshot_2025-12-06_230529_n2nbrd.png",
   },
   {
     id: 3,

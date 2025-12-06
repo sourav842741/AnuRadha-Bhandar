@@ -1,15 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/redux/store";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  useMap,
-} from "react-leaflet";
-import L, { LatLngExpression } from "leaflet";
 import { motion } from "framer-motion";
 import { OpenStreetMapProvider } from "leaflet-geosearch";
 import {
@@ -28,12 +21,15 @@ import {
 import { useRouter } from "next/navigation";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
+import { clearCart } from "@/redux/cartSlice";
+ 
 
-const markerIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-});
+/**
+ * NOTE:
+ * We DO NOT import `react-leaflet` or `leaflet` at the top-level
+ * because they access `window` during import and break SSR.
+ * We'll dynamic-import them at runtime (client-side only).
+ */
 
 interface Address {
   fullName: string;
@@ -46,12 +42,15 @@ interface Address {
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.userData);
 
   const [position, setPosition] = useState<[number, number] | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "online" | null>("cod");
-  const {subtotal,deliveryFee,finalTotal,cartData}=useSelector((state:RootState)=>state.cart)
+  const { subtotal, deliveryFee, finalTotal, cartData } = useSelector(
+    (state: RootState) => state.cart
+  );
 
   const [address, setAddress] = useState<Address>({
     fullName: user?.name || "",
@@ -62,8 +61,56 @@ export default function CheckoutPage() {
     fullAddress: "",
   });
 
+  // mapModules will hold react-leaflet components and leaflet itself once loaded
+  const [mapModules, setMapModules] = useState<null | {
+    MapContainer: any;
+    TileLayer: any;
+    Marker: any;
+    useMap: any;
+    L: any;
+  }>(null);
+
+  const [markerIcon, setMarkerIcon] = useState<any>(null);
+
+  // Load Leaflet & react-leaflet on client only
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let mounted = true;
+    (async () => {
+      try {
+        const reactLeaflet = await import("react-leaflet");
+        const L = await import("leaflet");
+
+        // create icon after L is available
+        const icon = new L.Icon({
+          iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
+          iconSize: [40, 40],
+          iconAnchor: [20, 40],
+        });
+
+        if (!mounted) return;
+        setMapModules({
+          MapContainer: reactLeaflet.MapContainer,
+          TileLayer: reactLeaflet.TileLayer,
+          Marker: reactLeaflet.Marker,
+          useMap: reactLeaflet.useMap,
+          L,
+        });
+        setMarkerIcon(icon);
+      } catch (err) {
+        console.error("Failed to load map libs:", err);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // 📍 Accurate Current Location
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -115,36 +162,42 @@ export default function CheckoutPage() {
     }
   };
 
-  // 📍 Draggable Marker Component (Type-Safe)
-  const DraggableMarker: React.FC = () => {
-    const map = useMap();
+  // DraggableMarker: defined as a component that uses react-leaflet's useMap
+  // We create it only when mapModules is ready.
+  const DraggableMarker = useMemo(() => {
+    if (!mapModules) return null;
+    const { Marker, useMap } = mapModules;
+    return function InnerDraggableMarker() {
+      const map = useMap();
+      useEffect(() => {
+        if (position) {
+          map.setView(position as any, 15, { animate: true });
+        }
+      }, [position, map]);
 
-    useEffect(() => {
-      if (position) {
-        map.setView(position as LatLngExpression, 15, { animate: true });
-      }
-    }, [position, map]);
+      if (!position || !markerIcon) return null;
 
-    if (!position) return null;
+      return (
+        <Marker
+          position={position}
+          draggable={true}
+          icon={markerIcon}
+          eventHandlers={{
+            dragend: (event: any) => {
+              const marker = event.target as any;
+              const { lat, lng } = marker.getLatLng();
+              setPosition([lat, lng]);
+            },
+          }}
+        />
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapModules, position, markerIcon]);
 
-    return (
-      <Marker
-        position={position}
-        draggable={true}
-        icon={markerIcon}
-        eventHandlers={{
-          dragend: (event: L.LeafletEvent) => {
-            const marker = event.target as L.Marker;
-            const { lat, lng } = marker.getLatLng();
-            setPosition([lat, lng]);
-          },
-        }}
-      />
-    );
-  };
-
-  // 🧭 Handle Current Location
+  // Handle Current Location
   const handleCurrentLocation = () => {
+    if (typeof window === "undefined") return;
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -157,49 +210,166 @@ export default function CheckoutPage() {
     }
   };
 
-  const handlePlaceOrder=async ()=>{
-     if (!position) {
-    alert("📍 Please allow location access or select your delivery location on the map!");
-    return;
-  }
+  // Load Razorpay Script
+  const loadRazorpayScript = () =>
+    new Promise((resolve) => {
+      if (typeof window === "undefined") return resolve(false);
+      if (document.getElementById("razorpay-sdk")) return resolve(true);
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.id = "razorpay-sdk";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
 
-  if (!paymentMethod) {
-    alert("💳 Please select a payment method!");
-    return;
-  }
-    try {
-      const {data}=await axios.post("/api/user/order",{
-        userId: user?._id,
-        items: cartData.map((item) => ({
-          product: item._id,
-          name: item.name,
-          price: item.price,
-          unit: item.unit,
-          quantity: item.quantity,
-          image: item.image,
-        })),
-        totalAmount: finalTotal,
-        paymentMethod,
-        address: {
-          fullName: address.fullName,
-          phone: address.phone,
-          fullAddress: address.fullAddress,
-          city: address.city,
-          state: address.state,
-          pincode: address.pincode,
-          latitude:position[0],
-          longitude:position[1],
-        },
-      })
-      router.push("/user/order-success")
-    } catch (error) {
-      console.log(error)
+  // handlePlaceOrder (with cart clear)
+  const handlePlaceOrder = async () => {
+    if (!position) {
+      alert("📍 Please allow location access or select a delivery location!");
+      return;
     }
-  }
+
+    if (!paymentMethod) {
+      alert("💳 Please select a payment method!");
+      return;
+    }
+
+    if (paymentMethod === "cod") {
+      try {
+        await axios.post("/api/user/order", {
+          userId: user?._id,
+          items: cartData.map((item) => ({
+            product: item._id,
+            name: item.name,
+            price: item.price,
+            unit: item.unit,
+            quantity: item.quantity,
+            image: item.image,
+          })),
+          totalAmount: finalTotal,
+          paymentMethod: "cod",
+          address: {
+            fullName: address.fullName,
+            phone: address.phone,
+            fullAddress: address.fullAddress,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            latitude: position[0],
+            longitude: position[1],
+          },
+        });
+
+        // Clear cart on client after successful order creation
+        try {
+          dispatch(clearCart());
+        } catch (e) {
+          console.warn("dispatch clearCart failed:", e);
+        }
+        try {
+          localStorage.removeItem("cart");
+        } catch (e) {
+          /* ignore */
+        }
+
+        router.push("/user/order-success");
+      } catch (err) {
+        console.log(err);
+        alert("Order failed! Try again.");
+      }
+      return;
+    }
+
+    // ONLINE (Razorpay)
+    try {
+      const amountInPaise = Math.round(finalTotal * 100);
+      const { data } = await axios.post("/api/razorpay/create-order", {
+        amount: amountInPaise,
+      });
+      const order = data.order;
+      const ok = await loadRazorpayScript();
+      if (!ok) {
+        alert("Failed to load Razorpay SDK");
+        return;
+      }
+
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "AnuRadha Bhandar",
+        description: "Order Payment",
+        order_id: order.id,
+        handler: async function (response: any) {
+          const verify = await axios.post("/api/razorpay/verify-payment", {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+
+          if (!verify.data.verified) {
+            alert("Payment verification failed!");
+            return;
+          }
+
+          await axios.post("/api/user/order", {
+            userId: user?._id,
+            items: cartData,
+            totalAmount: finalTotal,
+            paymentMethod: "online",
+            address: {
+              fullName: address.fullName,
+              phone: address.phone,
+              fullAddress: address.fullAddress,
+              city: address.city,
+              state: address.state,
+              pincode: address.pincode,
+              latitude: position[0],
+              longitude: position[1],
+            },
+            paymentInfo: {
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+            },
+          });
+
+          // Clear cart on client after successful verified payment & order creation
+          try {
+            dispatch(clearCart());
+          } catch (e) {
+            console.warn("dispatch clearCart failed:", e);
+          }
+          try {
+            localStorage.removeItem("cart");
+          } catch (e) {
+            /* ignore */
+          }
+
+          router.push("/user/order-success");
+        },
+        prefill: {
+          name: address.fullName,
+          contact: address.phone,
+        },
+        theme: {
+          color: "#22c55e",
+        },
+      };
+
+      // open Razorpay
+      // @ts-ignore
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.log(err);
+      alert("Payment failed! Try again.");
+    }
+  };
 
   return (
     <section className="w-[92%] md:w-[80%] mx-auto py-10 relative">
-      {/* 🔙 Back to Cart Button */}
+      {/* Back Button */}
       <motion.button
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.9 }}
@@ -220,7 +390,7 @@ export default function CheckoutPage() {
       </motion.h1>
 
       <div className="grid md:grid-cols-2 gap-8">
-        {/* 🏠 Address + Map */}
+        {/* Address + Map */}
         <motion.div
           initial={{ opacity: 0, x: -40 }}
           animate={{ opacity: 1, x: 0 }}
@@ -232,7 +402,6 @@ export default function CheckoutPage() {
           </h2>
 
           <div className="space-y-4">
-            {/* Name */}
             <div className="relative">
               <User className="absolute left-3 top-3 text-green-600" size={18} />
               <input
@@ -243,7 +412,6 @@ export default function CheckoutPage() {
               />
             </div>
 
-            {/* Phone */}
             <div className="relative">
               <Phone className="absolute left-3 top-3 text-green-600" size={18} />
               <input
@@ -254,7 +422,6 @@ export default function CheckoutPage() {
               />
             </div>
 
-            {/* Full Address */}
             <div className="relative">
               <Home className="absolute left-3 top-3 text-green-600" size={18} />
               <textarea
@@ -267,7 +434,6 @@ export default function CheckoutPage() {
               />
             </div>
 
-            {/* City / State / Pincode */}
             <div className="grid grid-cols-3 gap-3">
               <div className="relative">
                 <Building className="absolute left-3 top-3 text-green-600" size={18} />
@@ -301,7 +467,6 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* 🔍 Search Bar */}
             <div className="flex gap-2 mt-3">
               <input
                 type="text"
@@ -319,24 +484,34 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* 🌍 Map */}
+          {/* MAP */}
           <div className="relative mt-6 h-[330px] rounded-xl overflow-hidden border border-gray-200 shadow-inner">
-            {position && (
-              <MapContainer
-                center={position as LatLngExpression}
-                zoom={15}
-                scrollWheelZoom={true}
-                className="h-full w-full z-0"
-              >
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <DraggableMarker />
-              </MapContainer>
+            {mapModules && position ? (
+              (() => {
+                const { MapContainer, TileLayer } = mapModules;
+                const Draggable = DraggableMarker;
+                return (
+                  <MapContainer
+                    center={position as any}
+                    zoom={15}
+                    scrollWheelZoom={true}
+                    className="h-full w-full z-0"
+                    key={`${position[0]}_${position[1]}`} // force remount when position changes
+                  >
+                    <TileLayer
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors'
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    />
+                    {Draggable ? <Draggable /> : null}
+                  </MapContainer>
+                );
+              })()
+            ) : (
+              <div className="h-full w-full flex items-center justify-center text-sm text-gray-500">
+                Loading map...
+              </div>
             )}
 
-            {/* 📍 Floating Location Button */}
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleCurrentLocation}
@@ -347,7 +522,6 @@ export default function CheckoutPage() {
             </motion.button>
           </div>
 
-          {/* 🧭 Coordinates */}
           {position && (
             <p className="mt-3 text-center text-sm text-gray-700">
               <span className="font-medium">Latitude:</span> {position[0].toFixed(7)}{" "}
@@ -356,7 +530,7 @@ export default function CheckoutPage() {
           )}
         </motion.div>
 
-        {/* 💳 Payment Section */}
+        {/* PAYMENT SECTION */}
         <motion.div
           initial={{ opacity: 0, x: 40 }}
           animate={{ opacity: 1, x: 0 }}
@@ -377,9 +551,7 @@ export default function CheckoutPage() {
               }`}
             >
               <CreditCard className="text-green-600" />
-              <span className="font-medium text-gray-700">
-                Pay Online (Stripe)
-              </span>
+              <span className="font-medium text-gray-700">Pay Online (Razorpay)</span>
             </button>
 
             <button
@@ -391,13 +563,10 @@ export default function CheckoutPage() {
               }`}
             >
               <Truck className="text-green-600" />
-              <span className="font-medium text-gray-700">
-                Cash on Delivery
-              </span>
+              <span className="font-medium text-gray-700">Cash on Delivery</span>
             </button>
           </div>
 
-          {/* 💰 Summary */}
           <div className="border-t pt-4 text-gray-700 space-y-2 text-sm sm:text-base">
             <div className="flex justify-between">
               <span>Subtotal</span>
