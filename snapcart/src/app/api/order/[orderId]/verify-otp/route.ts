@@ -5,28 +5,40 @@ import DeliveryAssignment from "@/models/deliveryAssignment.model";
 
 export async function POST(
   req: Request,
-  { params }: { params: { orderId: string } }
+  context: { params: Promise<{ orderId: string }> }
 ) {
   try {
     await connectDb();
 
-    const { orderId } =await params; // 🔥 Correct way to get orderId from dynamic route
+    // ✅ FIX: params is Promise in Next.js 15
+    const { orderId } = await context.params;
+
     const { otp } = await req.json();
 
     if (!orderId || !otp) {
-      return NextResponse.json({
-        success: false,
-        message: "orderId and OTP are required",
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          message: "orderId and OTP are required",
+        },
+        { status: 400 }
+      );
     }
 
-    const order = await Order.findById(orderId);
+    const order: any = await Order.findById(orderId);
+
     if (!order) {
-      return NextResponse.json({ success: false, message: "Order not found" });
+      return NextResponse.json(
+        { success: false, message: "Order not found" },
+        { status: 404 }
+      );
     }
 
     if (order.deliveryOtp !== otp) {
-      return NextResponse.json({ success: false, message: "Invalid OTP" });
+      return NextResponse.json(
+        { success: false, message: "Invalid OTP" },
+        { status: 400 }
+      );
     }
 
     // ✔ Mark order as delivered
@@ -35,18 +47,26 @@ export async function POST(
     order.deliveredAt = new Date();
     await order.save();
 
-    // 🔥 Remove assigned delivery boy & complete assignment
+    // 🔥 Complete assignment
     await DeliveryAssignment.updateOne(
       { order: orderId },
       { $set: { assignedTo: null, status: "completed" } }
     );
 
-    return NextResponse.json({
-      success: true,
-      message: "Delivery Completed Successfully",
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Delivery Completed Successfully",
+      },
+      { status: 200 }
+    );
+
   } catch (error) {
     console.error("VERIFY OTP ERROR:", error);
-    return NextResponse.json({ success: false, error });
+
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 }
+    );
   }
 }

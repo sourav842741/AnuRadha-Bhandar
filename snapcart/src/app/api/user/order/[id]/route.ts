@@ -4,8 +4,9 @@ import connectDb from "@/lib/db";
 import Order from "@/models/order.model";
 import User from "@/models/user.model";
 
-
-
+// ==========================
+// 🟢 CREATE ORDER
+// ==========================
 export async function POST(req: Request) {
   try {
     await connectDb();
@@ -20,8 +21,14 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Create new Order
-    const newOrder = await Order.create({
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid userId" },
+        { status: 400 }
+      );
+    }
+
+    const newOrder: any = await Order.create({
       user: new mongoose.Types.ObjectId(userId),
       items: items.map((item: any) => ({
         product: new mongoose.Types.ObjectId(item.product),
@@ -34,9 +41,9 @@ export async function POST(req: Request) {
       totalAmount,
       paymentMethod,
       address,
+      status: "pending",
     });
 
-    // ✅ Push order to user’s myOrders array
     await User.findByIdAndUpdate(userId, {
       $push: { myOrders: newOrder._id },
     });
@@ -47,32 +54,50 @@ export async function POST(req: Request) {
     );
   } catch (error: any) {
     console.error("Error creating order:", error);
+
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: "Server error" },
       { status: 500 }
     );
   }
 }
 
-// 🟢 Optional: Get all orders for a specific user
-
-
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+// ==========================
+// 🟢 GET USER ORDERS
+// ==========================
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDb();
 
-    const { id } = await params;
+    // ✅ FIX: params is Promise
+    const { id } = await context.params;
 
-  
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid user ID" },
+        { status: 400 }
+      );
+    }
 
     const orders = await Order.find({ user: id })
       .populate("items.product")
       .populate("assignedDeliveryBoy")
       .sort({ createdAt: -1 });
 
-    return NextResponse.json({ success: true, orders }, { status: 200 });
+    return NextResponse.json(
+      { success: true, orders },
+      { status: 200 }
+    );
+
   } catch (error: any) {
     console.error("Error fetching orders:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+
+    return NextResponse.json(
+      { success: false, message: "Server error" },
+      { status: 500 }
+    );
   }
 }

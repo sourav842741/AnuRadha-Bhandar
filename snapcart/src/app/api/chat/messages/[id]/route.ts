@@ -3,11 +3,15 @@ import Message from "@/models/message.model";
 import ChatRoom from "@/models/chatRoom.model";
 import connectDb from "@/lib/db";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDb();
 
-    const { id } =await params; // FIXED (no await)
+    // ✅ FIX: params is Promise in Next.js 15
+    const { id } = await context.params;
 
     // Find ChatRoom using orderId
     const room = await ChatRoom.findOne({ orderId: id });
@@ -22,12 +26,12 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       .lean();
 
     const formatted = messages.map((m: any) => {
-      const msgTime = m.time || m.createdAt; // FIXED
+      const msgTime = m.time || m.createdAt;
 
       return {
         _id: m._id,
         sender: String(m.senderId),
-        message: m.text || "", // FIXED
+        message: m.text || "",
         time: msgTime
           ? new Date(msgTime).toLocaleTimeString([], {
               hour: "2-digit",
@@ -40,7 +44,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     return NextResponse.json({ messages: formatted });
   } catch (err) {
-    console.log("CHAT FETCH ERROR:", err);
+    console.error("CHAT FETCH ERROR:", err);
     return NextResponse.json({ messages: [] });
   }
 }

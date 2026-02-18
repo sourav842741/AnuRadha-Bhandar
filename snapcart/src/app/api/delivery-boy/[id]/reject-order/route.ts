@@ -5,24 +5,34 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDb();
-    const { id } =await params;
+
+    // ✅ FIX: params is Promise in Next.js 15
+    const { id } = await context.params;
+
     const session = await auth();
 
     if (!session?.user?.id) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     // ✅ Find assignment
-    const assignment = await DeliveryAssignment.findById(id);
+    const assignment: any = await DeliveryAssignment.findById(id);
+
     if (!assignment) {
-      return NextResponse.json({ message: "Assignment not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Assignment not found" },
+        { status: 404 }
+      );
     }
 
-    // ✅ Ensure it's still brodcasted
+    // ✅ Ensure it's still broadcasted
     if (assignment.status !== "brodcasted") {
       return NextResponse.json(
         { message: "Assignment is no longer available to reject" },
@@ -30,15 +40,15 @@ export async function GET(
       );
     }
 
-    // ✅ Remove delivery boy’s ID from broadcasted list
+    // ✅ Remove delivery boy ID from broadcast list
     assignment.brodcastedTo = assignment.brodcastedTo.filter(
       (boyId: any) => boyId.toString() !== session.user.id
     );
 
-    // ✅ Optional — if no one left, we can mark as “unassigned” again or leave as brodcasted
+    // Optional logic if no delivery boys left
     if (assignment.brodcastedTo.length === 0) {
-      // Optional: mark as expired or leave as broadcasted for admin review
-      assignment.status = "brodcasted";
+      assignment.status = "brodcasted"; 
+      // You can also mark as "expired" if needed
     }
 
     await assignment.save();
@@ -49,6 +59,7 @@ export async function GET(
     );
   } catch (error) {
     console.error("Reject assignment error:", error);
+
     return NextResponse.json(
       { message: `Reject order error: ${error}` },
       { status: 500 }

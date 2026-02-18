@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDb from "@/lib/db";
 import Order from "@/models/order.model";
+import mongoose from "mongoose";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { orderId: string } }
+  context: { params: Promise<{ orderId: string }> }
 ) {
   try {
     await connectDb();
 
-    const { orderId } =await params;
+    // ✅ FIX: params is Promise
+    const { orderId } = await context.params;
+
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid order ID" },
+        { status: 400 }
+      );
+    }
 
     const order: any = await Order.findById(orderId)
       .populate("assignedDeliveryBoy", "name mobile location")
@@ -52,10 +61,12 @@ export async function GET(
       },
       { status: 200 }
     );
+
   } catch (error: any) {
-    console.log("Track order API error:", error);
+    console.error("Track order API error:", error);
+
     return NextResponse.json(
-      { success: false, message: error.message },
+      { success: false, message: "Server error" },
       { status: 500 }
     );
   }

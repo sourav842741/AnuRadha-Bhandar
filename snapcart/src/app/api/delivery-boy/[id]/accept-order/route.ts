@@ -6,26 +6,38 @@ import Order from "@/models/order.model";
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(
+  req: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDb();
-    const { id } =await params;
+
+    // ✅ FIX: params is Promise in Next.js 15
+    const { id } = await context.params;
+
     const session = await auth();
-    const deliveryBoyId = session?.user.id;
+    const deliveryBoyId = session?.user?.id;
 
     if (!deliveryBoyId) {
-      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const assignment = await DeliveryAssignment.findById(id);
 
     if (!assignment) {
-      return NextResponse.json({ message: "assignment not found" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Assignment not found" },
+        { status: 400 }
+      );
     }
 
     if (assignment.status !== "brodcasted") {
       return NextResponse.json(
-        { message: "assignment is expired" },
+        { message: "Assignment is expired" },
         { status: 400 }
       );
     }
@@ -52,49 +64,61 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     await assignment.save();
 
     // Assign delivery boy to order
-    const order = await Order.findById(assignment.order);
+    const order: any = await Order.findById(assignment.order).populate("user");
+
     if (!order) {
-      return NextResponse.json({ message: "order not found" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Order not found" },
+        { status: 400 }
+      );
     }
 
     order.assignedDeliveryBoy = deliveryBoyId;
     await order.save();
 
     // ----------------------------------------------------------
-    // ⭐ REMOVE THIS DELIVERY BOY FROM ALL OTHER ASSIGNMENTS
+    // ⭐ REMOVE THIS DELIVERY BOY FROM OTHER BROADCASTED ASSIGNMENTS
     // ----------------------------------------------------------
     await DeliveryAssignment.updateMany(
       {
-        _id: { $ne: assignment._id }, // except accepted assignment
-        brodcastedTo: deliveryBoyId,  // where delivery boy exists in array
-        status: "brodcasted"
+        _id: { $ne: assignment._id },
+        brodcastedTo: deliveryBoyId,
+        status: "brodcasted",
       },
       {
-        $pull: { brodcastedTo: deliveryBoyId }
+        $pull: { brodcastedTo: deliveryBoyId },
       }
     );
-    await emitSocketEvent("order-assigned", {
-  orderId: order._id,
-  assignedDeliveryBoy: {
-    id: session?.user.id,
-    name: session?.user.name,
-    mobile: session?.user.mobile
-  }
-});
-await axios.post(`${process.env.NEXT_PUBLIC_BASE_URL}/api/chat/create`, {
-  orderId:order._id,
-  userId:order.user._id,
-  deliveryBoyId,
-});
 
-    return NextResponse.json(
-      { message: "order accepted successfully" },
-      { status: 200 }
+    // 🔥 Real-time event
+    await emitSocketEvent("order-assigned", {
+      orderId: order._id,
+      assignedDeliveryBoy: {
+        id: session?.user?.id,
+        name: session?.user?.name,
+        mobile: session?.user?.mobile,
+      },
+    });
+
+    // 🔥 Create Chat Room
+    await axios.post(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/chat/create`,
+      {
+        orderId: order._id,
+        userId: order.user?._id,
+        deliveryBoyId,
+      }
     );
 
-  } catch (error) {
     return NextResponse.json(
-      { message: `accept order error ${error}` },
+      { message: "Order accepted successfully" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Accept order error:", error);
+
+    return NextResponse.json(
+      { message: `Accept order error ${error}` },
       { status: 500 }
     );
   }
