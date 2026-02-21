@@ -37,12 +37,11 @@ const userSchema = new mongoose.Schema<IUser>(
       required: true,
       unique: true,
     },
-    mobile: {
-      type: String,
-      required: false,
-      unique: true,
-      
-    },
+   mobile: {
+  type: String,
+  unique: true,
+  sparse: true,   // ⭐ VERY IMPORTANT
+},
     role: {
       type: String,
       enum: ["admin", "user", "deliveryBoy"],
