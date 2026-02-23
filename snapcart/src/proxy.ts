@@ -1,7 +1,7 @@
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
 
  const { pathname } = req.nextUrl;
 
@@ -19,7 +19,7 @@ export async function middleware(req: NextRequest) {
   return NextResponse.next();
  }
 
- // ✅ Token check
+ // ✅ Get token
  const token = await getToken({
   req,
   secret: process.env.AUTH_SECRET
@@ -33,7 +33,7 @@ export async function middleware(req: NextRequest) {
 
  const role = token.role;
 
- // ✅ Role routes
+ // ✅ Role protection
  if(pathname.startsWith("/user") && role !== "user"){
   return NextResponse.redirect(new URL("/unauthorized", req.url));
  }
