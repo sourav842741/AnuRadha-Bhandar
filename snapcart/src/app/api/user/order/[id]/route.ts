@@ -4,100 +4,163 @@ import connectDb from "@/lib/db";
 import Order from "@/models/order.model";
 import User from "@/models/user.model";
 
+
 // ==========================
 // 🟢 CREATE ORDER
 // ==========================
 export async function POST(req: Request) {
-  try {
-    await connectDb();
 
-    const body = await req.json();
-    const { userId, items, totalAmount, paymentMethod, address } = body;
+ try{
 
-    if (!userId || !items?.length || !paymentMethod || !address) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+  await connectDb();
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid userId" },
-        { status: 400 }
-      );
-    }
+  const body = await req.json();
 
-    const newOrder: any = await Order.create({
-      user: new mongoose.Types.ObjectId(userId),
-      items: items.map((item: any) => ({
-        product: new mongoose.Types.ObjectId(item.product),
-        name: item.name,
-        price: item.price,
-        unit: item.unit,
-        quantity: item.quantity,
-        image: item.image,
-      })),
-      totalAmount,
-      paymentMethod,
-      address,
-      status: "pending",
-    });
+  const { userId, items, totalAmount, paymentMethod, address } = body;
 
-    await User.findByIdAndUpdate(userId, {
-      $push: { myOrders: newOrder._id },
-    });
 
-    return NextResponse.json(
-      { success: true, message: "Order created successfully", order: newOrder },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    console.error("Error creating order:", error);
+  if (!userId || !items?.length || !paymentMethod || !address) {
 
-    return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 }
-    );
+   return NextResponse.json(
+    { success:false,message:"Missing required fields"},
+    {status:400}
+   );
+
   }
+
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+
+   return NextResponse.json(
+    {success:false,message:"Invalid userId"},
+    {status:400}
+   );
+
+  }
+
+
+  const newOrder:any = await Order.create({
+
+   user:new mongoose.Types.ObjectId(userId),
+
+   items:items.map((item:any)=>({
+
+    product:new mongoose.Types.ObjectId(item._id), // ✅ FIXED
+
+    name:item.name,
+
+    price:item.price,
+
+    unit:item.unit,
+
+    quantity:item.quantity,
+
+    image:item.image
+
+   })),
+
+   totalAmount,
+
+   paymentMethod,
+
+   address,
+
+   status:"pending"
+
+  });
+
+
+  await User.findByIdAndUpdate(userId,{
+   $push:{myOrders:newOrder._id}
+  });
+
+
+  return NextResponse.json({
+
+   success:true,
+
+   message:"Order created successfully",
+
+   order:newOrder
+
+  },{status:201});
+
+
+ }
+ catch(error:any){
+
+  console.log("Create Order Error:",error);
+
+  return NextResponse.json({
+
+   success:false,
+
+   message:"Server error"
+
+  },{status:500});
+
+ }
+
 }
+
 
 // ==========================
 // 🟢 GET USER ORDERS
 // ==========================
 export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
-  try {
-    await connectDb();
+ req:NextRequest,
+ context:{params:Promise<{id:string}>}
+){
 
-    // ✅ FIX: params is Promise
-    const { id } = await context.params;
+ try{
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid user ID" },
-        { status: 400 }
-      );
-    }
+  await connectDb();
 
-    const orders = await Order.find({ user: id })
-      .populate("items.product")
-      .populate("assignedDeliveryBoy")
-      .sort({ createdAt: -1 });
+  const {id} = await context.params;
 
-    return NextResponse.json(
-      { success: true, orders },
-      { status: 200 }
-    );
 
-  } catch (error: any) {
-    console.error("Error fetching orders:", error);
+  if(!mongoose.Types.ObjectId.isValid(id)){
 
-    return NextResponse.json(
-      { success: false, message: "Server error" },
-      { status: 500 }
-    );
+   return NextResponse.json(
+    {success:false,message:"Invalid user ID"},
+    {status:400}
+   );
+
   }
+
+
+  const orders = await Order.find({
+
+   user:new mongoose.Types.ObjectId(id)
+
+  })
+  .populate("items.product")
+  .populate("assignedDeliveryBoy")
+  .sort({createdAt:-1});
+
+
+  return NextResponse.json({
+
+   success:true,
+
+   orders
+
+  });
+
+
+ }
+ catch(error:any){
+
+  console.log("Error fetching orders:",error);
+
+  return NextResponse.json({
+
+   success:false,
+
+   message:"Server error"
+
+  },{status:500});
+
+ }
+
 }
