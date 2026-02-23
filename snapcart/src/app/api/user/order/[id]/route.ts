@@ -1,78 +1,61 @@
+
 import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectDb from "@/lib/db";
 import Order from "@/models/order.model";
-import User from "@/models/user.model";
+import "@/models/grocery.model"; // ✅ register model
 
 
+export async function GET(
+ req:NextRequest,
+ context:{params:Promise<{id:string}>}
+){
 
-export async function POST(req: Request) {
-  try {
-    await connectDb();
+ try{
 
-    const body = await req.json();
-    const { userId, items, totalAmount, paymentMethod, address } = body;
+  await connectDb();
 
-    if (!userId || !items?.length || !paymentMethod || !address) {
-      return NextResponse.json(
-        { success: false, message: "Missing required fields" },
-        { status: 400 }
-      );
-    }
+  const {id} = await context.params;
 
-    // ✅ Create new Order
-    const newOrder = await Order.create({
-      user: new mongoose.Types.ObjectId(userId),
-      items: items.map((item: any) => ({
-        product: new mongoose.Types.ObjectId(item.product),
-        name: item.name,
-        price: item.price,
-        unit: item.unit,
-        quantity: item.quantity,
-        image: item.image,
-      })),
-      totalAmount,
-      paymentMethod,
-      address,
-    });
 
-    // ✅ Push order to user’s myOrders array
-    await User.findByIdAndUpdate(userId, {
-      $push: { myOrders: newOrder._id },
-    });
+  if(!mongoose.Types.ObjectId.isValid(id)){
 
-    return NextResponse.json(
-      { success: true, message: "Order created successfully", order: newOrder },
-      { status: 201 }
-    );
-  } catch (error: any) {
-    console.error("Error creating order:", error);
-    return NextResponse.json(
-      { success: false, message: error.message },
-      { status: 500 }
-    );
+   return NextResponse.json({
+    success:false,
+    message:"Invalid user ID"
+   },{status:400})
+
   }
-}
-
-// 🟢 Optional: Get all orders for a specific user
 
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    await connectDb();
+  const orders = await Order.find({
 
-    const { id } = await params;
+   user:new mongoose.Types.ObjectId(id)
 
-  
+  })
+  .populate("items.product")
+  .sort({createdAt:-1})
 
-    const orders = await Order.find({ user: id })
-      .populate("items.product")
-      .populate("assignedDeliveryBoy")
-      .sort({ createdAt: -1 });
 
-    return NextResponse.json({ success: true, orders }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error fetching orders:", error);
-    return NextResponse.json({ success: false, message: error.message }, { status: 500 });
-  }
+  return NextResponse.json({
+
+   success:true,
+   orders
+
+  })
+
+ }
+ catch(error:any){
+
+  console.log("Fetch Orders Error:",error)
+
+  return NextResponse.json({
+
+   success:false,
+   message:error.message
+
+  },{status:500})
+
+ }
+
 }
