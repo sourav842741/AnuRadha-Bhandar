@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectDb from "@/lib/db";
 import Order from "@/models/order.model";
+import Grocery from "@/models/grocery.model"; // ✅ IMPORTANT
+
 
 export async function GET(
  req:NextRequest,
@@ -30,14 +32,8 @@ export async function GET(
    user:new mongoose.Types.ObjectId(id)
 
   })
-  .populate({
-   path:"items.product",
-   strictPopulate:false
-  })
+  .populate("items.product") // ✅ now works
   .sort({createdAt:-1})
-
-
-  console.log("User Orders:",orders.length)
 
 
   return NextResponse.json({
@@ -55,7 +51,7 @@ export async function GET(
   return NextResponse.json({
 
    success:false,
-   message:"Server error"
+   message:error.message
 
   },{status:500})
 
