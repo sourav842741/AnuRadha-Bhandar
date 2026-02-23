@@ -31,13 +31,10 @@ export default function CheckoutPage() {
   );
 
   const [position, setPosition] = useState<[number, number] | null>(null);
-
   const [searchQuery, setSearchQuery] = useState("");
-
   const [paymentMethod, setPaymentMethod] =
     useState<"cod" | "online">("cod");
 
-  /* ✅ Address State */
   const [address, setAddress] = useState<Address>({
     fullName: "",
     phone: "",
@@ -51,12 +48,12 @@ export default function CheckoutPage() {
   const [markerIcon, setMarkerIcon] = useState<any>(null);
 
 
-  /* ✅ AUTO FILL USER NAME + PHONE */
+  /* ✅ AUTO FILL USER */
   useEffect(() => {
 
     if(user){
 
-      setAddress((prev)=>({
+      setAddress(prev=>({
 
         ...prev,
         fullName:user.name || "",
@@ -67,6 +64,28 @@ export default function CheckoutPage() {
     }
 
   },[user])
+
+
+
+  /* ================= RAZORPAY LOAD ================= */
+
+  const loadRazorpay = () => {
+
+    return new Promise((resolve)=>{
+
+      const script = document.createElement("script")
+
+      script.src="https://checkout.razorpay.com/v1/checkout.js"
+
+      script.onload=()=>resolve(true)
+
+      script.onerror=()=>resolve(false)
+
+      document.body.appendChild(script)
+
+    })
+
+  }
 
 
 
@@ -106,7 +125,7 @@ export default function CheckoutPage() {
 
     }catch(err){
 
-      console.log("Reverse error",err)
+      console.log(err)
 
     }
 
@@ -234,9 +253,7 @@ export default function CheckoutPage() {
     if(!user?._id){
 
       alert("Please login first")
-
       router.push("/login")
-
       return
 
     }
@@ -244,7 +261,6 @@ export default function CheckoutPage() {
     if(!position){
 
       alert("Select delivery location")
-
       return
 
     }
@@ -252,46 +268,144 @@ export default function CheckoutPage() {
     if(!address.fullAddress?.trim()){
 
       alert("Fill complete address")
-
       return
 
     }
 
+
+
     try{
 
-      await axios.post("/api/user/order",{
+      /* COD ORDER */
 
-        userId:user._id,
+      if(paymentMethod==="cod"){
 
-        items:cartData,
+        await axios.post("/api/user/order",{
 
-        totalAmount:finalTotal,
+          userId:user._id,
 
-        paymentMethod,
+          items:cartData,
 
-        address:{
+          totalAmount:finalTotal,
 
-          ...address,
+          paymentMethod,
 
-          latitude:position[0],
-          longitude:position[1]
+          address:{
+            ...address,
+            latitude:position[0],
+            longitude:position[1]
+          }
 
-        }
+        })
+
+        dispatch(clearCart())
+
+        router.push("/user/order-success")
+
+        return
+
+      }
+
+
+
+      /* ONLINE PAYMENT */
+
+      const res = await axios.post("/api/razorpay/create-order",{
+
+        amount:finalTotal*100
 
       })
 
-      dispatch(clearCart())
+      const order=res.data.order
 
-      localStorage.removeItem("cart")
 
-      router.push("/user/order-success")
+
+      const loaded=await loadRazorpay()
+
+      if(!loaded){
+
+        alert("Payment failed to load")
+        return
+
+      }
+
+
+
+      const options={
+
+        key:process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+
+        amount:order.amount,
+
+        currency:"INR",
+
+        name:"Anu Radha Bhandar",
+
+        description:"Order Payment",
+
+        order_id:order.id,
+
+
+        handler:async function(response:any){
+
+          await axios.post("/api/razorpay/verify",response)
+
+
+
+          await axios.post("/api/user/order",{
+
+            userId:user._id,
+
+            items:cartData,
+
+            totalAmount:finalTotal,
+
+            paymentMethod:"online",
+
+            address:{
+              ...address,
+              latitude:position[0],
+              longitude:position[1]
+            }
+
+          })
+
+
+          dispatch(clearCart())
+
+          router.push("/user/order-success")
+
+        },
+
+
+        prefill:{
+
+          name:user.name,
+          email:user.email,
+          contact:user.mobile
+
+        },
+
+
+        theme:{
+          color:"#16a34a"
+        }
+
+      }
+
+
+
+      const paymentObject=new (window as any).Razorpay(options)
+
+      paymentObject.open()
+
 
     }
     catch(err:any){
 
-      console.log(err.response?.data || err.message)
+      console.log(err)
 
-      alert("Order failed")
+      alert("Payment Failed")
 
     }
 
@@ -362,22 +476,16 @@ Delivery Address
 </h2>
 
 
-{/* NAME */}
-
 <input
 
 value={address.fullName}
 
 className="w-full border p-3 rounded-lg mb-3"
 
-placeholder="Full Name"
-
 readOnly
 
 />
 
-
-{/* PHONE */}
 
 <input
 
@@ -385,14 +493,10 @@ value={address.phone}
 
 className="w-full border p-3 rounded-lg mb-3"
 
-placeholder="Phone Number"
-
 readOnly
 
 />
 
-
-{/* ADDRESS */}
 
 <textarea
 
@@ -401,9 +505,7 @@ placeholder="Full Address"
 value={address.fullAddress}
 
 onChange={(e)=>
-
 setAddress({...address,fullAddress:e.target.value})
-
 }
 
 className="w-full border p-3 rounded-lg mb-4"
@@ -458,12 +560,8 @@ className="h-full w-full"
 >
 
 <mapModules.TileLayer
-
 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-
 />
-
-
 
 <mapModules.Marker
 
@@ -490,9 +588,7 @@ await reverseGeocode(lat,lon)
 
 />
 
-
 <MapClickHandler/>
-
 
 </mapModules.MapContainer>
 
@@ -516,7 +612,6 @@ Loading map...
 
 <div className="bg-white rounded-2xl shadow-lg p-6">
 
-
 <h2 className="text-xl font-semibold mb-4">
 
 Payment
@@ -525,38 +620,27 @@ Payment
 
 
 <button
-
 onClick={()=>setPaymentMethod("cod")}
-
 className={`w-full p-3 rounded-lg mb-2 border ${
 paymentMethod==="cod"
 ? "bg-green-600 text-white"
 :"bg-white"
 }`}
-
 >
-
 Cash on Delivery
-
 </button>
 
 
 <button
-
 onClick={()=>setPaymentMethod("online")}
-
 className={`w-full p-3 rounded-lg border ${
 paymentMethod==="online"
 ? "bg-green-600 text-white"
 :"bg-white"
 }`}
-
 >
-
 Pay Online
-
 </button>
-
 
 
 <div className="border-t pt-4 mt-6">
@@ -572,17 +656,11 @@ Pay Online
 </div>
 
 
-
 <button
-
 onClick={handlePlaceOrder}
-
 className="w-full mt-6 bg-green-600 text-white py-3 rounded-full"
-
 >
-
 Place Order
-
 </button>
 
 
