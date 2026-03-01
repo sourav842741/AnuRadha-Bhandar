@@ -1,325 +1,509 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React,{useState,useEffect} from "react";
+import {motion,AnimatePresence} from "framer-motion";
 import Image from "next/image";
-import {
-  Search,
-  Pencil,
-  X,
-  Save,
-  ArrowLeft,
-  Package,
-  Upload,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
 
-interface Product {
-  _id: string;
-  name: string;
-  category: string;
-  price: number;
-  unit: string;
-  image: string;
+import {
+Search,
+Pencil,
+ArrowLeft,
+Package,
+Upload,
+X
+} from "lucide-react";
+
+import {useRouter} from "next/navigation";
+
+interface Product{
+_id:string;
+name:string;
+category:string;
+price:number;
+unit:string;
+image:string;
 }
 
-const categories = [
-  "Fruits & Vegetables",
-  "Dairy & Eggs",
-  "Rice, Atta & Grains",
-  "Snacks & Biscuits",
-  "Spices & Masalas",
-  "Beverages & Drinks",
-  "Personal Care",
-  "Household Essentials",
-  "Instant & Packaged Food",
-  "Baby & Pet Care",
+const categories=[
+
+"Fruits & Vegetables",
+"Dairy & Eggs",
+"Rice, Atta & Grains",
+"Snacks & Biscuits",
+"Spices & Masalas",
+"Beverages & Drinks",
+"Personal Care",
+"Household Essentials",
+"Instant & Packaged Food",
+"Baby & Pet Care",
+
 ];
 
-const units = ["kg", "g", "liter", "ml", "piece", "pack"];
-
-export default function AdminProductsClient({
-  products,
-}: {
-  products: Product[];
-}) {
-  const router = useRouter();
-
-  const [search, setSearch] = useState("");
-  const [editing, setEditing] = useState<Product | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  // ✅ Important Fix (Vercel hydration)
-  const [filtered, setFiltered] = useState<Product[]>([]);
-
-  useEffect(() => {
-    console.log("Admin Products:", products);
-    setFiltered(products);
-  }, [products]);
-
-  // 🔍 Search
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const q = search.toLowerCase();
-
-    const result = products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q)
-    );
-
-    setFiltered(result);
-  };
-
-  // 📸 Image Upload Preview
-  const handleImageChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-
-    if (file) {
-      const reader = new FileReader();
+const units=["kg","g","liter","ml","piece","pack"];
 
-      reader.onload = (ev) => {
-        setImagePreview(ev.target?.result as string);
-      };
-
-      reader.readAsDataURL(file);
-    }
-  };
 
-  // 💾 Save Edit
-  const handleEditSave = async () => {
-    if (!editing) return;
 
-    const updatedProduct = {
-      ...editing,
-      image: imagePreview || editing.image,
-    };
+export default function AdminProductsClient({products}:{products:Product[]}){
 
-    const res = await fetch(
-      `/api/admin/grocery/${editing._id}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedProduct),
-      }
-    );
-
-    if (res.ok) {
-      alert("✅ Product updated successfully");
-
-      setEditing(null);
-
-      window.location.reload();
-    } else {
-      alert("❌ Failed to update product");
-    }
-  };
+const router=useRouter();
 
-  return (
-    <section className="pt-4 w-[95%] md:w-[85%] mx-auto pb-20">
+const[search,setSearch]=useState("");
 
-      {/* Header */}
+const[editing,setEditing]=useState<Product|null>(null);
 
-      <div className="flex justify-between items-center mb-8">
+const[imagePreview,setImagePreview]=useState<string|null>(null);
 
-        <button
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full"
-        >
-          <ArrowLeft size={18} />
-          Back
-        </button>
+const[filtered,setFiltered]=useState<Product[]>([]);
 
-        <h1 className="text-2xl font-bold text-green-700 flex gap-2">
-          <Package size={26} />
-          Manage Store Products
-        </h1>
 
-      </div>
+useEffect(()=>{
 
-      {/* Search */}
+setFiltered(products);
 
-      <form
-        onSubmit={handleSearch}
-        className="flex items-center border rounded-full px-5 py-3 mb-8 max-w-lg mx-auto"
-      >
+},[products]);
 
-        <Search className="mr-2" />
 
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search product..."
-          className="w-full outline-none"
-        />
 
-      </form>
+/* Search */
 
-      {/* Products */}
+const handleSearch=(e:React.FormEvent)=>{
 
-      <div className="space-y-6">
+e.preventDefault();
 
-        {filtered.length === 0 && (
-          <div className="text-center text-gray-500">
-            No Products Found
-          </div>
-        )}
-
-        {filtered.map((product) => (
-
-          <div
-            key={product._id}
-            className="bg-white p-5 rounded-xl shadow flex gap-5"
-          >
-
-            <div className="relative w-32 h-32">
-
-              <Image
-                src={product.image}
-                alt={product.name}
-                fill
-                className="object-cover rounded-lg"
-              />
-
-            </div>
-
-            <div className="flex-1">
-
-              <h3 className="font-bold">
-                {product.name}
-              </h3>
-
-              <p>{product.category}</p>
-
-              <p className="text-green-700 font-bold">
-                ₹{product.price}/{product.unit}
-              </p>
-
-              <button
-                onClick={() => {
-                  setEditing(product);
-                  setImagePreview(product.image);
-                }}
-                className="bg-green-600 text-white px-4 py-2 mt-3 rounded-lg flex gap-2"
-              >
-                <Pencil size={15} />
-                Edit
-              </button>
-
-            </div>
-
-          </div>
-
-        ))}
-
-      </div>
-
-      {/* Edit Modal */}
-
-      <AnimatePresence>
-
-        {editing && (
-
-          <motion.div
-            className="fixed inset-0 bg-black/40 flex justify-center items-center"
-          >
-
-            <div className="bg-white p-6 rounded-xl w-96">
-
-              <h2 className="text-xl font-bold mb-4">
-                Edit Product
-              </h2>
-
-              <input
-                value={editing.name}
-                onChange={(e) =>
-                  setEditing({
-                    ...editing,
-                    name: e.target.value,
-                  })
-                }
-                className="border p-2 w-full mb-3"
-              />
-
-              <select
-                value={editing.category}
-                onChange={(e) =>
-                  setEditing({
-                    ...editing,
-                    category: e.target.value,
-                  })
-                }
-                className="border p-2 w-full mb-3"
-              >
-                {categories.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-
-              <input
-                value={editing.price}
-                type="number"
-                onChange={(e) =>
-                  setEditing({
-                    ...editing,
-                    price: Number(e.target.value),
-                  })
-                }
-                className="border p-2 w-full mb-3"
-              />
-
-              <select
-                value={editing.unit}
-                onChange={(e) =>
-                  setEditing({
-                    ...editing,
-                    unit: e.target.value,
-                  })
-                }
-                className="border p-2 w-full mb-3"
-              >
-                {units.map((u) => (
-                  <option key={u}>{u}</option>
-                ))}
-              </select>
-
-              <input
-                type="file"
-                onChange={handleImageChange}
-                className="mb-3"
-              />
-
-              <div className="flex justify-end gap-3">
-
-                <button
-                  onClick={() => setEditing(null)}
-                  className="border px-3 py-1"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleEditSave}
-                  className="bg-green-600 text-white px-3 py-1"
-                >
-                  Save
-                </button>
-
-              </div>
-
-            </div>
-
-          </motion.div>
-
-        )}
-
-      </AnimatePresence>
-
-    </section>
-  );
+const q=search.toLowerCase();
+
+setFiltered(
+
+products.filter(
+
+(p)=>
+
+p.name.toLowerCase().includes(q) ||
+
+p.category.toLowerCase().includes(q)
+
+)
+
+)
+
+}
+
+
+
+/* Image */
+
+const handleImageChange=(e:React.ChangeEvent<HTMLInputElement>)=>{
+
+const file=e.target.files?.[0];
+
+if(file){
+
+const reader=new FileReader();
+
+reader.onload=(ev)=>{
+
+setImagePreview(ev.target?.result as string)
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+}
+
+
+
+/* Save */
+
+const handleEditSave=async()=>{
+
+if(!editing)return;
+
+const updated={
+
+...editing,
+
+image:imagePreview || editing.image
+
+};
+
+const res=await fetch(
+
+`/api/admin/grocery/${editing._id}`,
+
+{
+
+method:"PATCH",
+
+headers:{
+
+"Content-Type":"application/json"
+
+},
+
+body:JSON.stringify(updated)
+
+}
+
+)
+
+if(res.ok){
+
+setEditing(null);
+
+window.location.reload();
+
+}
+
+}
+
+
+
+return(
+
+<section className="max-w-7xl mx-auto px-4 py-6 pb-20">
+
+
+
+{/* Header */}
+
+<div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+
+
+<button
+onClick={()=>router.push("/")}
+className="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full"
+>
+
+<ArrowLeft size={18}/>
+Back
+
+</button>
+
+
+
+<h1 className="text-2xl md:text-3xl font-bold text-green-700 flex gap-2">
+
+<Package/>
+Store Product Manager
+
+</h1>
+
+
+</div>
+
+
+
+{/* Search */}
+
+<form
+onSubmit={handleSearch}
+className="flex items-center border rounded-full px-5 py-3 mb-10 max-w-xl mx-auto shadow-sm"
+>
+
+<Search className="mr-2"/>
+
+<input
+value={search}
+onChange={(e)=>setSearch(e.target.value)}
+placeholder="Search product..."
+className="w-full outline-none"
+/>
+
+</form>
+
+
+
+
+{/* Products */}
+
+{categories.map((category)=>{
+
+const categoryProducts=filtered.filter(
+(p)=>p.category===category
+)
+
+if(categoryProducts.length===0)return null;
+
+
+return(
+
+<div key={category} className="mb-10">
+
+
+<h2 className="text-xl font-bold text-green-700 mb-4 border-l-4 border-green-600 pl-3">
+
+{category}
+
+</h2>
+
+
+
+<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
+
+
+
+{categoryProducts.map((product)=>(
+
+
+<div
+key={product._id}
+className="bg-white rounded-xl shadow hover:shadow-lg transition p-3 relative"
+>
+
+
+{/* Pencil Icon Top Right */}
+
+<button
+onClick={()=>{
+setEditing(product)
+setImagePreview(product.image)
+}}
+className="absolute top-2 right-2 bg-white shadow-md p-2 rounded-full hover:bg-gray-100"
+>
+
+<Pencil size={16}/>
+
+</button>
+
+
+
+
+<div className="relative w-full h-32 mb-2">
+
+
+<Image
+src={product.image}
+alt={product.name}
+fill
+sizes="200px"
+className="object-cover rounded-lg"
+/>
+
+</div>
+
+
+
+<h3 className="font-semibold text-sm line-clamp-1">
+
+{product.name}
+
+</h3>
+
+
+
+<p className="text-green-700 font-bold text-sm mb-2">
+
+₹{product.price}/{product.unit}
+
+</p>
+
+
+
+{/* Edit Button Center */}
+
+<button
+onClick={()=>{
+setEditing(product)
+setImagePreview(product.image)
+}}
+className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+>
+
+<Pencil size={16}/>
+
+Edit
+
+</button>
+
+
+
+</div>
+
+
+))}
+
+
+
+</div>
+
+
+</div>
+
+)
+
+})}
+
+
+
+
+{/* Edit Modal */}
+
+<AnimatePresence>
+
+{editing&&(
+
+<motion.div
+initial={{opacity:0}}
+animate={{opacity:1}}
+exit={{opacity:0}}
+className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+>
+
+
+<motion.div
+initial={{scale:0.9}}
+animate={{scale:1}}
+exit={{scale:0.9}}
+className="bg-white rounded-2xl p-6 w-[95%] sm:w-[420px] shadow-xl"
+>
+
+
+
+<div className="flex justify-between items-center mb-4">
+
+
+<h2 className="text-xl font-bold">
+
+Edit Product
+
+</h2>
+
+
+<button onClick={()=>setEditing(null)}>
+
+<X/>
+
+</button>
+
+
+</div>
+
+
+
+
+<input
+value={editing.name}
+onChange={(e)=>setEditing({...editing,name:e.target.value})}
+className="border p-3 w-full mb-3 rounded-lg"
+/>
+
+
+
+<select
+value={editing.category}
+onChange={(e)=>setEditing({...editing,category:e.target.value})}
+className="border p-3 w-full mb-3 rounded-lg"
+>
+
+{categories.map(c=>(
+<option key={c}>{c}</option>
+))}
+
+</select>
+
+
+
+<input
+value={editing.price}
+type="number"
+onChange={(e)=>setEditing({
+...editing,
+price:Number(e.target.value)
+})}
+className="border p-3 w-full mb-3 rounded-lg"
+/>
+
+
+
+<select
+value={editing.unit}
+onChange={(e)=>setEditing({...editing,unit:e.target.value})}
+className="border p-3 w-full mb-3 rounded-lg"
+>
+
+{units.map(u=>(
+<option key={u}>{u}</option>
+))}
+
+</select>
+
+
+
+{/* Upload Button with Icon */}
+
+<label className="flex items-center justify-center gap-2 border p-3 rounded-lg cursor-pointer mb-3 hover:bg-gray-50">
+
+<Upload size={18}/>
+
+Choose Photo
+
+<input
+type="file"
+onChange={handleImageChange}
+className="hidden"
+/>
+
+</label>
+
+
+
+{imagePreview&&(
+
+<Image
+src={imagePreview}
+alt="preview"
+width={120}
+height={120}
+className="rounded-lg mx-auto mb-3"
+/>
+
+)}
+
+
+
+
+<div className="flex gap-3 justify-end">
+
+
+<button
+onClick={()=>setEditing(null)}
+className="border px-4 py-2 rounded-lg"
+>
+
+Cancel
+
+</button>
+
+
+<button
+onClick={handleEditSave}
+className="bg-green-600 text-white px-4 py-2 rounded-lg"
+>
+
+Save
+
+</button>
+
+
+</div>
+
+
+
+</motion.div>
+
+
+</motion.div>
+
+)}
+
+</AnimatePresence>
+
+
+
+</section>
+
+);
+
 }
