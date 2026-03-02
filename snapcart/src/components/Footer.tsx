@@ -211,7 +211,7 @@ viewport={{once:true}}
 transition={{duration:.6}}
 
 className="mt-24 
-bg-gradient-to-b 
+bg-linear-to-b 
 from-green-600 
 to-green-700 
 text-white
