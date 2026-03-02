@@ -1,18 +1,13 @@
 import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
+
   try {
 
     const body = await req.json();
-
-    // Check env variables
-    if (!process.env.MAIL_USER || !process.env.MAIL_PASS) {
-      return NextResponse.json(
-        { success: false, message: "Email config missing" },
-        { status: 500 }
-      );
-    }
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -25,37 +20,29 @@ export async function POST(req: Request) {
     });
 
     await transporter.sendMail({
-      from: `"AnuRadha Bhandar" <${process.env.MAIL_USER}>`,
+      from: process.env.MAIL_USER,
       to: process.env.MAIL_USER,
       subject: "New Contact Message - AnuRadha Bhandar",
       html: `
-        <h2>New Customer Message</h2>
+      <h2>New Customer Message</h2>
 
-        <p><b>Name:</b> ${body.name}</p>
+      <p>Name: ${body.name}</p>
 
-        <p><b>Email:</b> ${body.email}</p>
+      <p>Email: ${body.email}</p>
 
-        <p><b>Message:</b></p>
+      <p>Message:</p>
 
-        <p>${body.message}</p>
-      `,
+      <p>${body.message}</p>
+      `
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Mail Sent Successfully",
-    });
+    return NextResponse.json({ success: true });
 
   } catch (error) {
 
-    console.log("Mail Error:", error);
+    console.log(error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Mail Failed",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false });
+
   }
 }
