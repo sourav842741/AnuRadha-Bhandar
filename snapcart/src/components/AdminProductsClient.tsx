@@ -506,13 +506,20 @@ className="hidden"
 
 {imagePreview&&(
 
+<div className="flex justify-center mb-3">
+
+<div className="relative w-32 h-32 border rounded-lg overflow-hidden">
+
 <Image
 src={imagePreview}
 alt="preview"
-width={120}
-height={120}
-className="rounded-lg mx-auto mb-3"
+fill
+className="object-cover"
 />
+
+</div>
+
+</div>
 
 )}
 
