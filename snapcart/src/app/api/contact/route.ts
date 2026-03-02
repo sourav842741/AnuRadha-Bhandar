@@ -1,6 +1,6 @@
-import nodemailer from "nodemailer";
 import { NextResponse } from "next/server";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
@@ -8,6 +8,9 @@ export async function POST(req: Request) {
   try {
 
     const body = await req.json();
+
+    // ✅ YAHAN LIKHNA HAI
+    const nodemailer = require("nodemailer");
 
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
@@ -22,15 +25,13 @@ export async function POST(req: Request) {
     await transporter.sendMail({
       from: process.env.MAIL_USER,
       to: process.env.MAIL_USER,
-      subject: "New Contact Message - AnuRadha Bhandar",
+      subject: "New Contact Message",
       html: `
       <h2>New Customer Message</h2>
 
       <p>Name: ${body.name}</p>
 
       <p>Email: ${body.email}</p>
-
-      <p>Message:</p>
 
       <p>${body.message}</p>
       `
