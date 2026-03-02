@@ -22,6 +22,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { createPortal } from "react-dom";
+import { ShoppingBasket } from "lucide-react";
 
 interface IUser {
   _id?: mongoose.Types.ObjectId;
@@ -165,14 +166,25 @@ function Nav({ user }: { user: IUser }) {
 
   return (
     <>
-      <nav className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-black/30 flex justify-between items-center h-20 px-4 md:px-8 z-999">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform"
-        >
-          SnapCart
-        </Link>
+<nav className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2
+bg-gradient-to-r from-green-500/70 to-green-700/70
+backdrop-blur-xl
+border border-white/20
+rounded-2xl
+shadow-xl shadow-black/25
+flex justify-between items-center
+h-20 px-4 md:px-8
+z-50">        {/* Logo */}
+       <Link
+  href="/"
+  className="flex items-center gap-2 text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform"
+>
+
+<ShoppingBasket size={28} />
+
+Anuradha Bhandar
+
+</Link>
 
         {/* Search (User - Desktop) */}
         {isUser && (
