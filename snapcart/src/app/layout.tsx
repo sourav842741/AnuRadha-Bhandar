@@ -5,6 +5,8 @@ import ClientProvider from "@/ClientProvider";
 import InitUser from "@/InitUser";
 import { ReduxProviders } from "@/redux/ReduxProviders";
 import "leaflet/dist/leaflet.css";
+import Script from "next/script"; // ✅ add this
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -32,11 +34,20 @@ export default function RootLayout({
       >
         <ClientProvider>
           <ReduxProviders>
-          <InitUser/>
-          
-        {children}
-        </ReduxProviders>
+            <InitUser />
+
+            {children}
+
+          </ReduxProviders>
         </ClientProvider>
+
+        {/* ✅ Chatbot Script */}
+        <Script
+          src="https://customer-support-ai-virid.vercel.app/chatBot.js"
+          data-owner-id="usr_111887352657346831"
+          strategy="afterInteractive"
+        />
+
       </body>
     </html>
   );

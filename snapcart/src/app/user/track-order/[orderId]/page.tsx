@@ -173,10 +173,57 @@ export default function TrackOrderPage() {
     setNewMessage("");
   };
 
-  /* LOADING */
-  if (!order || !userAddressLocation) {
-    return <div className="flex items-center justify-center min-h-screen text-green-700 text-lg">Loading...</div>;
-  }
+ /* LOADING */
+if (!order || !userAddressLocation) {
+  return (
+
+<div className="flex items-center justify-center min-h-screen bg-green-50">
+
+<motion.div
+initial={{opacity:0,scale:.9}}
+animate={{opacity:1,scale:1}}
+className="flex flex-col items-center gap-4"
+>
+
+{/* Spinner */}
+
+<div className="relative w-14 h-14">
+
+<div className="
+absolute inset-0
+border-4 border-green-200
+rounded-full
+"/>
+
+<motion.div
+animate={{rotate:360}}
+transition={{repeat:Infinity,duration:1,ease:"linear"}}
+
+className="
+absolute inset-0
+border-4 border-green-600
+border-t-transparent
+rounded-full
+"
+/>
+
+</div>
+
+
+{/* Text */}
+
+<p className="text-green-700 font-semibold">
+
+Loading Order...
+
+</p>
+
+</motion.div>
+
+</div>
+
+  );
+}
 
   const isDelivered = order.status === "delivered";
 

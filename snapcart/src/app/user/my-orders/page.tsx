@@ -73,11 +73,11 @@ function MyOrders() {
         <div className="fixed top-0 left-0 w-full backdrop-blur-lg bg-white/70 shadow-sm border-b z-50">
           <div className="max-w-3xl mx-auto flex items-center gap-4 px-4 py-3">
             <button
-              onClick={() => router.back()}
-              className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
-            >
-              <ArrowLeftCircle size={24} className="text-green-700" />
-            </button>
+  onClick={() => router.push("/")}
+  className="p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition"
+>
+  <ArrowLeftCircle size={24} className="text-green-700" />
+</button>
 
             <h1 className="text-xl font-bold text-gray-800">
               My Orders
