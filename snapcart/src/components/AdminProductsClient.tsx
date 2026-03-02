@@ -124,7 +124,7 @@ reader.readAsDataURL(file)
 
 /* Save */
 
-const handleEditSave=async()=>{
+const handleEditSave = async()=>{
 
 if(!editing)return;
 
@@ -132,12 +132,14 @@ const updated={
 
 ...editing,
 
+price:Number(editing.price),
+mrp:Number(editing.mrp),
+
 image:imagePreview || editing.image
 
 };
 
-
-const res=await fetch(
+const res = await fetch(
 
 `/api/admin/grocery/${editing._id}`,
 
@@ -157,12 +159,11 @@ body:JSON.stringify(updated)
 
 )
 
-
 if(res.ok){
 
 setEditing(null);
 
-window.location.reload();
+router.refresh(); // ✅ Important
 
 }
 
