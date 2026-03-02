@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion } from "framer-motion";
@@ -6,78 +5,86 @@ import {
   ShoppingBasket,
   ArrowRight,
   Bike,
-  UserCog,
-  Eye,
-  EyeOff,
-  Mail,
-  User,
-  Lock,
-  ArrowLeft,
-  LogIn,
-  Loader2, // ✅ Spinner icon
+  Sparkles,
 } from "lucide-react";
-import Image from "next/image";
-import googleImage from "@/assets/google.svg";
-import Link from "next/link";
-import { useState } from "react";
-import axios from "axios";
-import { signIn, useSession } from "next-auth/react";
-import { auth } from "@/auth";
 
-type propType={
-    step:(num:number)=>void
-}
-function Welcome({step}:propType) {
+type propType = {
+  step: (num: number) => void;
+};
+
+function Welcome({ step }: propType) {
   return (
-     <main className="flex flex-col items-center justify-center min-h-screen text-center p-6">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="flex items-center gap-3"
-          >
+    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 via-white to-green-100 p-6">
+
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-md w-full bg-white/70 backdrop-blur-xl border border-white shadow-xl rounded-3xl p-8 text-center"
+      >
+
+        {/* Logo */}
+        <div className="flex justify-center mb-4">
+          <div className="bg-green-100 p-4 rounded-2xl shadow">
             <ShoppingBasket className="w-10 h-10 text-green-600" />
-            <h1 className="text-4xl md:text-5xl font-extrabold text-green-700">
-              AnuRadha Bhandar
-            </h1>
-          </motion.div>
+          </div>
+        </div>
 
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="mt-4 text-gray-700 text-lg md:text-xl max-w-lg"
-          >
-            Your one-stop destination for fresh groceries, organic produce, and
-            daily essentials delivered right to your doorstep.
-          </motion.p>
+        {/* Title */}
+        <h1 className="text-3xl md:text-4xl font-bold text-green-700">
+          AnuRadha Bhandar
+        </h1>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="flex items-center justify-center gap-10 mt-10"
-          >
-            <ShoppingBasket className="w-24 h-24 md:w-32 md:h-32 text-green-600 drop-shadow-md" />
-            <Bike className="w-24 h-24 md:w-32 md:h-32 text-orange-500 drop-shadow-md" />
-          </motion.div>
+        {/* Subtitle */}
+        <p className="text-gray-600 mt-3 leading-relaxed">
+          Fresh groceries and daily essentials delivered
+          <span className="font-semibold text-green-700"> in minutes</span> 🚀
+        </p>
+
+        {/* Icons */}
+        <div className="flex justify-center gap-6 mt-6">
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
-            className="mt-12"
+            animate={{ y: [0, -8, 0] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="bg-green-50 p-4 rounded-xl shadow-sm"
           >
-            <button
-              onClick={() => step(2)}
-              className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-2xl shadow-md transition-all duration-200"
-            >
-              Next
-              <ArrowRight className="w-5 h-5" />
-            </button>
+            <ShoppingBasket className="text-green-600 w-8 h-8" />
           </motion.div>
-        </main>
-  )
+
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ repeat: Infinity, duration: 2, delay: 0.3 }}
+            className="bg-orange-50 p-4 rounded-xl shadow-sm"
+          >
+            <Bike className="text-orange-500 w-8 h-8" />
+          </motion.div>
+
+        </div>
+
+        {/* Tag */}
+        <div className="mt-6 flex justify-center">
+          <div className="bg-green-100 text-green-700 px-4 py-1 rounded-full text-sm flex items-center gap-1">
+            <Sparkles size={14} />
+            Fast Delivery
+          </div>
+        </div>
+
+        {/* Button */}
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          onClick={() => step(2)}
+          className="mt-8 w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 transition"
+        >
+          Get Started
+          <ArrowRight size={18} />
+        </motion.button>
+
+      </motion.div>
+
+    </main>
+  );
 }
 
-export default Welcome
+export default Welcome;

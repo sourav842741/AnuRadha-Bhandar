@@ -165,169 +165,187 @@ function Nav({ user }: { user: IUser }) {
 
   return (
     <>
-      <nav className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-500 to-green-700 rounded-2xl shadow-lg shadow-black/30 flex justify-between items-center h-20 px-4 md:px-8 z-999">
-        {/* Logo */}
+      <nav className="fixed top-3 left-1/2 -translate-x-1/2 
+w-[96%] max-w-6xl h-16 px-5
+bg-white/80 backdrop-blur-xl
+border border-white/40
+rounded-2xl
+shadow-lg flex justify-between items-center z-[999]">
+
+  {/* Logo */}
+  <Link
+    href="/"
+    className="flex items-center gap-2 font-bold text-xl text-green-700"
+  >
+    <ShoppingCart className="w-6 h-6 text-green-600"/>
+   <span className="leading-tight text-left">
+  <span className="block sm:inline">AnuRadha</span>
+  <span className="block sm:inline sm:ml-1">Bhandar</span>
+</span>
+  </Link>
+
+
+  {/* Desktop Search */}
+  {isUser && (
+    <form
+      onSubmit={handleSearch}
+      className="hidden md:flex items-center 
+      bg-gray-100 rounded-full px-4 py-2
+      w-[40%]"
+    >
+      <Search className="w-5 h-5 text-gray-500 mr-2"/>
+      <input
+        type="text"
+        value={search}
+        onChange={(e)=>setSearch(e.target.value)}
+        placeholder="Search groceries..."
+        className="bg-transparent outline-none w-full"
+      />
+    </form>
+  )}
+
+
+  {/* Right Section */}
+  <div className="flex items-center gap-3">
+
+    {/* Mobile Search */}
+    {isUser && (
+      <button
+        onClick={()=>setMobileSearchOpen(!mobileSearchOpen)}
+        className="md:hidden
+        w-10 h-10 rounded-full
+        bg-gray-100 flex items-center justify-center"
+      >
+        <Search className="w-5 h-5 text-green-600"/>
+      </button>
+    )}
+
+    {/* Cart */}
+    {isUser && (
+      <Link
+        href="/user/cart"
+        className="relative
+        w-10 h-10 rounded-full
+        bg-green-600
+        flex items-center justify-center
+        shadow-md"
+      >
+        <ShoppingCart className="w-5 h-5 text-white"/>
+
+        {cartData.length>0 &&(
+          <span className="
+          absolute -top-1 -right-1
+          bg-red-500 text-white
+          text-xs w-5 h-5
+          flex items-center justify-center
+          rounded-full">
+            {cartData.length}
+          </span>
+        )}
+      </Link>
+    )}
+
+
+    {/* Profile */}
+    <div ref={dropdownRef} className="relative">
+
+      <button
+        onClick={()=>setOpen(!open)}
+        className="w-10 h-10 rounded-full
+        overflow-hidden bg-gray-100
+        flex items-center justify-center"
+      >
+        {user.image ?(
+          <Image
+          src={user.image}
+          alt="user"
+          fill
+          className="object-cover"/>
+        ):
+        <User className="text-green-600 w-5 h-5"/>}
+      </button>
+
+
+      <AnimatePresence>
+
+      {open &&(
+
+      <motion.div
+      initial={{opacity:0,y:-10}}
+      animate={{opacity:1,y:0}}
+      exit={{opacity:0,y:-10}}
+      className="absolute right-0 mt-3 w-56
+      bg-white rounded-2xl shadow-xl p-2">
+
+        <div className="p-3 border-b">
+          <p className="font-semibold">{user.name}</p>
+          <p className="text-xs text-gray-500">{user.role}</p>
+        </div>
+
+
+        {isUser &&(
+
         <Link
-          href="/"
-          className="text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform"
+        href="/user/my-orders"
+        className="flex gap-2 p-3 hover:bg-gray-50 rounded-lg"
         >
-          AnuRadha Bhandar
+        <Package className="w-5 h-5 text-green-600"/>
+        My Orders
         </Link>
 
-        {/* Search (User - Desktop) */}
-        {isUser && (
-          <form
-            onSubmit={handleSearch}
-            className="hidden md:flex items-center bg-white rounded-full px-4 py-2 w-1/2 max-w-lg shadow-md"
-          >
-            <Search className="text-gray-500 w-5 h-5 mr-2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search groceries..."
-              className="w-full outline-none text-gray-700 placeholder-gray-400"
-            />
-          </form>
         )}
 
-        {/* Right Section */}
-        <div className="flex items-center gap-3 md:gap-6 relative">
-          {/* Mobile Search Toggle */}
-          {isUser && (
-            <button
-              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              className="bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md hover:scale-105 transition md:hidden"
-            >
-              {mobileSearchOpen ? (
-                <X className="text-green-600 w-6 h-6" />
-              ) : (
-                <Search className="text-green-600 w-6 h-6" />
-              )}
-            </button>
-          )}
 
-          {/* Cart (User only) */}
-          {isUser && (
-            <Link
-              href="/user/cart"
-              className="relative bg-white rounded-full w-11 h-11 flex items-center justify-center shadow-md hover:scale-105 transition"
-            >
-              <ShoppingCart className="text-green-600 w-6 h-6" />
-              {cartData.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-semibold shadow">
-                  {cartData.length}
-                </span>
-              )}
-            </Link>
-          )}
+        {isDelivery &&(
 
-          {/* Admin Links */}
-          {isAdmin && (
-            <>
-              <div className="hidden md:flex items-center gap-4">
-                <Link
-                  href="/admin/add-grocery"
-                  className="flex items-center gap-2 bg-white text-green-700 font-semibold px-4 py-2 rounded-full hover:bg-green-100 transition-all"
-                >
-                  <PlusCircle className="w-5 h-5" /> Add Grocery
-                </Link>
-                <Link
-                  href="/admin/products"
-                  className="flex items-center gap-2 bg-white text-green-700 font-semibold px-4 py-2 rounded-full hover:bg-green-100 transition-all"
-                >
-                  <Boxes className="w-5 h-5" /> View Products
-                </Link>
-                <Link
-                  href="/admin/manage-orders"
-                  className="flex items-center gap-2 bg-white text-green-700 font-semibold px-4 py-2 rounded-full hover:bg-green-100 transition-all"
-                >
-                  <ClipboardList className="w-5 h-5" /> Manage Orders
-                </Link>
-              </div>
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="md:hidden bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-md"
-              >
-                <Menu className="text-green-600 w-6 h-6" />
-              </button>
-            </>
-          )}
+        <Link
+        href="/delivery/orders"
+        className="flex gap-2 p-3 hover:bg-gray-50 rounded-lg"
+        >
+        <Truck className="w-5 h-5 text-green-600"/>
+        Orders
+        </Link>
 
-          {/* Profile dropdown */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setOpen(!open)}
-              className="bg-white rounded-full w-11 h-11 flex items-center justify-center overflow-hidden shadow-md hover:scale-105 transition-transform"
-            >
-              {user.image ? (
-                <Image src={user.image} alt="user" fill className="object-cover rounded-full" />
-              ) : (
-                <User className="text-green-600 w-6 h-6" />
-              )}
-            </button>
+        )}
 
-            <AnimatePresence>
-              {open && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-3 w-56 bg-white rounded-2xl shadow-xl border border-gray-200 p-3 z-[999]"
-                >
-                  <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-100">
-                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
-                      {user.image ? (
-                        <Image src={user.image} alt="user" width={40} height={40} className="rounded-full" />
-                      ) : (
-                        <User className="text-green-600 w-5 h-5" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-gray-800 font-semibold">{user.name}</p>
-                      <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-                    </div>
-                  </div>
+        <button
+        onClick={()=>signOut({callbackUrl:"/"})}
+        className="flex gap-2 p-3 w-full
+        hover:bg-red-50 rounded-lg">
 
-                  {isUser && (
-                    <Link
-                      href="/user/my-orders"
-                      className="flex items-center gap-2 px-3 py-3 hover:bg-green-50 rounded-lg text-gray-700 font-medium"
-                      onClick={() => setOpen(false)}
-                    >
-                      <Package className="w-5 h-5 text-green-600" />
-                      My Orders
-                    </Link>
-                  )}
+        <LogOut className="w-5 h-5 text-red-600"/>
+        Logout
 
-                  {isDelivery && (
-                    <Link
-                      href="/delivery/orders"
-                      className="flex items-center gap-2 px-3 py-3 hover:bg-green-50 rounded-lg text-gray-700 font-medium"
-                      onClick={() => setOpen(false)}
-                    >
-                      <Truck className="w-5 h-5 text-green-600" />
-                      Assigned Orders
-                    </Link>
-                  )}
+        </button>
 
-                  <button
-                    onClick={() => {
-                      setOpen(false);
-                      signOut({ callbackUrl: "/" });
-                    }}
-                    className="flex items-center gap-2 w-full text-left px-3 py-3 hover:bg-red-50 rounded-lg text-gray-700 font-medium"
-                  >
-                    <LogOut className="w-5 h-5 text-red-600" />
-                    Logout
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </nav>
+      </motion.div>
+
+      )}
+
+      </AnimatePresence>
+
+    </div>
+
+
+    {/* Admin Menu */}
+    {isAdmin &&(
+
+      <button
+      onClick={()=>setMenuOpen(true)}
+      className="md:hidden
+      w-10 h-10
+      rounded-full bg-gray-100
+      flex items-center justify-center">
+
+      <Menu className="w-5 h-5 text-green-700"/>
+
+      </button>
+
+    )}
+
+  </div>
+
+</nav>
 
       {/* ✅ Mobile Search Bar (Slide Down) */}
       <AnimatePresence>

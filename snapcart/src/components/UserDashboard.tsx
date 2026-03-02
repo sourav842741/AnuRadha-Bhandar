@@ -34,8 +34,9 @@ export default async function UserDashboard() {
               category={item.category}
               image={item.image}
               price={item.price}
+              mrp={item.mrp}
               unit={item.unit}
-              _id={item._id?.toString?.() || item._id} // ✅ convert ObjectId to string (just in case)
+              _id={item._id.toString()}
             />
           ))}
         </div>

@@ -15,14 +15,19 @@ X
 
 import {useRouter} from "next/navigation";
 
+
 interface Product{
+
 _id:string;
 name:string;
 category:string;
-price:number;
+price:string;
+mrp:string;
 unit:string;
 image:string;
+
 }
+
 
 const categories=[
 
@@ -39,11 +44,13 @@ const categories=[
 
 ];
 
+
 const units=["kg","g","liter","ml","piece","pack"];
 
 
 
 export default function AdminProductsClient({products}:{products:Product[]}){
+
 
 const router=useRouter();
 
@@ -54,6 +61,7 @@ const[editing,setEditing]=useState<Product|null>(null);
 const[imagePreview,setImagePreview]=useState<string|null>(null);
 
 const[filtered,setFiltered]=useState<Product[]>([]);
+
 
 
 useEffect(()=>{
@@ -128,6 +136,7 @@ image:imagePreview || editing.image
 
 };
 
+
 const res=await fetch(
 
 `/api/admin/grocery/${editing._id}`,
@@ -148,6 +157,7 @@ body:JSON.stringify(updated)
 
 )
 
+
 if(res.ok){
 
 setEditing(null);
@@ -160,10 +170,10 @@ window.location.reload();
 
 
 
+
 return(
 
 <section className="max-w-7xl mx-auto px-4 py-6 pb-20">
-
 
 
 {/* Header */}
@@ -243,7 +253,6 @@ return(
 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
 
 
-
 {categoryProducts.map((product)=>(
 
 
@@ -253,14 +262,12 @@ className="bg-white rounded-xl shadow hover:shadow-lg transition p-3 relative"
 >
 
 
-{/* Pencil Icon Top Right */}
-
 <button
 onClick={()=>{
 setEditing(product)
 setImagePreview(product.image)
 }}
-className="absolute top-2 right-2 bg-white shadow-md p-2 rounded-full hover:bg-gray-100"
+className="absolute top-2 right-2 bg-white shadow-md p-2 rounded-full"
 >
 
 <Pencil size={16}/>
@@ -271,7 +278,6 @@ className="absolute top-2 right-2 bg-white shadow-md p-2 rounded-full hover:bg-g
 
 
 <div className="relative w-full h-32 mb-2">
-
 
 <Image
 src={product.image}
@@ -293,26 +299,35 @@ className="object-cover rounded-lg"
 
 
 
-<p className="text-green-700 font-bold text-sm mb-2">
+{/* Price */}
 
-₹{product.price}/{product.unit}
+<p className="text-sm mb-2">
+
+<span className="text-green-700 font-bold">
+₹{product.price}
+</span>
+
+<span className="line-through text-gray-400 ml-2">
+₹{product.mrp}
+</span>
+
+<span className="text-gray-500 ml-1">
+/{product.unit}
+</span>
 
 </p>
 
 
-
-{/* Edit Button Center */}
 
 <button
 onClick={()=>{
 setEditing(product)
 setImagePreview(product.image)
 }}
-className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700"
+className="flex items-center justify-center gap-2 w-full bg-green-600 text-white py-2 rounded-lg"
 >
 
 <Pencil size={16}/>
-
 Edit
 
 </button>
@@ -356,7 +371,7 @@ className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
 initial={{scale:0.9}}
 animate={{scale:1}}
 exit={{scale:0.9}}
-className="bg-white rounded-2xl p-6 w-[95%] sm:w-[420px] shadow-xl"
+className="bg-white rounded-2xl p-6 w-[95%] sm:w-[420px]"
 >
 
 
@@ -365,16 +380,12 @@ className="bg-white rounded-2xl p-6 w-[95%] sm:w-[420px] shadow-xl"
 
 
 <h2 className="text-xl font-bold">
-
 Edit Product
-
 </h2>
 
 
 <button onClick={()=>setEditing(null)}>
-
 <X/>
-
 </button>
 
 
@@ -405,15 +416,61 @@ className="border p-3 w-full mb-3 rounded-lg"
 
 
 
+{/* Actual Price */}
+
 <input
-value={editing.price}
+value={editing.mrp}
 type="number"
+placeholder="Actual Price ₹"
 onChange={(e)=>setEditing({
 ...editing,
-price:Number(e.target.value)
+mrp:e.target.value
 })}
 className="border p-3 w-full mb-3 rounded-lg"
 />
+
+
+
+{/* Offer Price */}
+
+<input
+value={editing.price}
+type="number"
+placeholder="Offer Price ₹"
+onChange={(e)=>setEditing({
+...editing,
+price:e.target.value
+})}
+className="border p-3 w-full mb-3 rounded-lg"
+/>
+
+
+
+{/* Discount Preview */}
+
+{editing.mrp && editing.price &&(
+
+<div className="bg-gray-50 p-3 rounded-lg mb-3">
+
+<span className="text-green-700 font-bold">
+₹{editing.price}
+</span>
+
+<span className="line-through text-gray-400 ml-2">
+₹{editing.mrp}
+</span>
+
+<span className="text-green-600 ml-2 font-semibold">
+
+{Math.round(
+(1-Number(editing.price)/Number(editing.mrp))*100
+)}% off
+
+</span>
+
+</div>
+
+)}
 
 
 
@@ -431,9 +488,7 @@ className="border p-3 w-full mb-3 rounded-lg"
 
 
 
-{/* Upload Button with Icon */}
-
-<label className="flex items-center justify-center gap-2 border p-3 rounded-lg cursor-pointer mb-3 hover:bg-gray-50">
+<label className="flex items-center justify-center gap-2 border p-3 rounded-lg cursor-pointer mb-3">
 
 <Upload size={18}/>
 
@@ -471,9 +526,7 @@ className="rounded-lg mx-auto mb-3"
 onClick={()=>setEditing(null)}
 className="border px-4 py-2 rounded-lg"
 >
-
 Cancel
-
 </button>
 
 
@@ -481,9 +534,7 @@ Cancel
 onClick={handleEditSave}
 className="bg-green-600 text-white px-4 py-2 rounded-lg"
 >
-
 Save
-
 </button>
 
 

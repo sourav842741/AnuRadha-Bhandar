@@ -1,73 +1,268 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Facebook, Instagram, Twitter, Mail, MapPin, Phone } from "lucide-react";
+import {
+  Facebook,
+  Instagram,
+  Twitter,
+  Mail,
+  MapPin,
+  Phone,
+  ShoppingBasket
+} from "lucide-react";
 import Link from "next/link";
 
 export default function Footer() {
-  return (
-    <motion.footer
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="bg-gradient-to-r from-green-600 to-green-700 text-white mt-20"
-    >
-      <div className="w-[90%] md:w-[80%] mx-auto py-10 grid grid-cols-1 md:grid-cols-3 gap-10 border-b border-green-500/40">
-        {/* 🛒 Brand Info */}
-        <div>
-          <h2 className="text-2xl font-bold mb-3">AnuRadha Bhandar</h2>
-          <p className="text-sm text-green-100 leading-relaxed">
-            Your one-stop online grocery store delivering freshness to your doorstep.  
-            Shop smart, eat fresh, and save more every day!
-          </p>
-        </div>
 
-        {/* 🔗 Quick Links */}
-        <div>
-          <h3 className="text-xl font-semibold mb-3">Quick Links</h3>
-          <ul className="space-y-2 text-green-100 text-sm">
-            <li><Link href="/" className="hover:text-white transition">Home</Link></li>
-            <li><Link href="/shop" className="hover:text-white transition">Shop</Link></li>
-            <li><Link href="/about" className="hover:text-white transition">About Us</Link></li>
-            <li><Link href="/contact" className="hover:text-white transition">Contact</Link></li>
-            <li><Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
-          </ul>
-        </div>
+return (
 
-        {/* 📞 Contact Info */}
-        <div>
-          <h3 className="text-xl font-semibold mb-3">Contact Us</h3>
-          <ul className="space-y-2 text-green-100 text-sm">
-            <li className="flex items-center gap-2">
-              <MapPin size={16} /> 11/1 T.C Mukherjee Street Rishra,Kolkata, India
-            </li>
-            <li className="flex items-center gap-2">
-              <Phone size={16} /> +91 8847608613
-            </li>
-            <li className="flex items-center gap-2">
-              <Mail size={16} /> souravkumar85054@gmail.com
-            </li>
-          </ul>
-          {/* 🌐 Social Links */}
-          <div className="flex gap-4 mt-4">
-            <Link href="https://facebook.com" target="_blank">
-              <Facebook className="w-5 h-5 hover:text-white transition" />
-            </Link>
-            <Link href="https://instagram.com" target="_blank">
-              <Instagram className="w-5 h-5 hover:text-white transition" />
-            </Link>
-            <Link href="https://twitter.com" target="_blank">
-              <Twitter className="w-5 h-5 hover:text-white transition" />
-            </Link>
-          </div>
-        </div>
-      </div>
+<motion.footer
+initial={{opacity:0,y:40}}
+whileInView={{opacity:1,y:0}}
+viewport={{once:true}}
+transition={{duration:.6}}
 
-      {/* ⚖️ Bottom Bar */}
-      <div className="text-center py-4 text-sm text-green-100 bg-green-800/40">
-        © {new Date().getFullYear()} <span className="font-semibold">AnuRadha Bhandar</span>. All rights reserved.
-      </div>
-    </motion.footer>
-  );
+className="mt-24 
+bg-gradient-to-b 
+from-green-600 
+to-green-700 
+text-white
+rounded-t-3xl
+shadow-xl"
+
+>
+
+
+<div className="max-w-6xl mx-auto px-6 py-14
+grid md:grid-cols-3 gap-10">
+
+
+{/* Brand */}
+
+<div>
+
+<div className="flex items-center gap-2 mb-4">
+
+<ShoppingBasket className="text-white"/>
+
+<h2 className="text-2xl font-bold">
+
+AnuRadha Bhandar
+
+</h2>
+
+</div>
+
+<p className="text-green-100 text-sm leading-relaxed">
+
+Fresh groceries delivered to your doorstep quickly and safely.
+Shop smart and eat fresh every day.
+
+</p>
+
+</div>
+
+
+
+{/* Links */}
+
+<div>
+
+<h3 className="font-semibold text-lg mb-4">
+
+Quick Links
+
+</h3>
+
+<ul className="space-y-3 text-green-100 text-sm">
+
+
+<li>
+
+<Link
+href="/"
+className="hover:text-white transition"
+>
+
+Home
+
+</Link>
+
+</li>
+
+
+<li>
+
+<Link
+href="/user/my-orders"
+className="hover:text-white transition"
+>
+
+My Orders
+
+</Link>
+
+</li>
+
+
+<li>
+
+<Link
+href="/"
+className="hover:text-white transition"
+>
+
+Shop
+
+</Link>
+
+</li>
+
+
+<li>
+
+<Link
+href="/privacy"
+className="hover:text-white transition"
+>
+
+Privacy Policy
+
+</Link>
+
+</li>
+
+</ul>
+
+</div>
+
+
+
+{/* Contact */}
+
+<div>
+
+<h3 className="font-semibold text-lg mb-4">
+
+Contact Us
+
+</h3>
+
+<div className="space-y-3 text-green-100 text-sm">
+
+
+<div className="flex gap-2">
+
+<MapPin size={16}/>
+
+<span>
+
+11/1 T.C Mukherjee Street  
+Rishra, Kolkata
+
+</span>
+
+</div>
+
+
+<div className="flex gap-2">
+
+<Phone size={16}/>
+
++91 8847608613
+
+</div>
+
+
+<div className="flex gap-2">
+
+<Mail size={16}/>
+
+souravkumar85054@gmail.com
+
+</div>
+
+</div>
+
+
+
+{/* Social */}
+
+<div className="flex gap-4 mt-5">
+
+
+<Link href="#">
+
+<div className="w-9 h-9 rounded-full
+bg-green-500
+flex items-center justify-center
+hover:bg-green-400
+transition">
+
+<Facebook size={16}/>
+
+</div>
+
+</Link>
+
+
+<Link href="#">
+
+<div className="w-9 h-9 rounded-full
+bg-green-500
+flex items-center justify-center
+hover:bg-green-400
+transition">
+
+<Instagram size={16}/>
+
+</div>
+
+</Link>
+
+
+<Link href="#">
+
+<div className="w-9 h-9 rounded-full
+bg-green-500
+flex items-center justify-center
+hover:bg-green-400
+transition">
+
+<Twitter size={16}/>
+
+</div>
+
+</Link>
+
+
+</div>
+
+</div>
+
+</div>
+
+
+
+{/* Bottom */}
+
+<div className="border-t border-green-500/40 py-4 text-center text-green-100 text-sm">
+
+© {new Date().getFullYear()}  
+
+<span className="ml-2 font-semibold text-white">
+
+ AnuRadha Bhandar
+
+</span>
+
+. All rights reserved.
+
+</div>
+
+
+</motion.footer>
+
+);
+
 }
