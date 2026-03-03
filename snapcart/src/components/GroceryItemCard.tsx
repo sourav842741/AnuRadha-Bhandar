@@ -81,17 +81,22 @@ className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duratio
 >
 
 
-{/* Image */}
+<div className="relative w-full aspect-[4/3] bg-gray-50 overflow-hidden">
 
-<div className="relative w-full aspect-4/3 bg-gray-50 overflow-hidden group">
+  {/* 🔥 BLINKIT STYLE DISCOUNT BADGE */}
+  {discount > 0 && (
+    <div className="absolute top-2 left-2 bg-blue-600 text-white text-[11px] font-bold px-2 py-1 rounded-md shadow-md z-10">
+      {discount}% OFF
+    </div>
+  )}
 
-<Image
-src={image}
-alt={name}
-fill
-sizes="(max-width:768px)100vw,25vw"
-className="object-contain p-4"
-/>
+  <Image
+    src={image}
+    alt={name}
+    fill
+    sizes="(max-width:768px)100vw,25vw"
+    className="object-contain p-4"
+  />
 
 </div>
 
@@ -160,11 +165,11 @@ className="object-contain p-4"
 
 
 
-<span className="text-green-600 text-sm font-semibold">
+{/* <span className="text-green-600 text-sm font-semibold">
 
 {discount}% off
 
-</span>
+</span> */}
 
 
 

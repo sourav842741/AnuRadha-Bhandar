@@ -52,13 +52,21 @@ function Nav({ user }: { user: IUser }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (search.trim()) {
-      window.location.href = `/search?q=${encodeURIComponent(search)}`;
-      setMobileSearchOpen(false);
-    }
-  };
+ const handleSearch = (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!search.trim()) return;
+
+  const currentPath = window.location.pathname;
+
+  // Agar category page par ho
+  if (currentPath.startsWith("/category")) {
+    window.location.href = `${currentPath}?q=${encodeURIComponent(search)}`;
+  } else {
+    // Warna global search
+   window.location.href = `/?q=${encodeURIComponent(search)}`;
+  }
+};
 
   const isUser = user.role === "user";
   const isAdmin = user.role === "admin";
