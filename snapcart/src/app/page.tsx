@@ -11,7 +11,9 @@ import connectDb from "@/lib/db";
 import User from "@/models/user.model";
 import { redirect } from "next/navigation";
 
-export default async function Home() {
+export default async function Home(props: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const session = await auth();
   await connectDb();
 
@@ -19,12 +21,9 @@ export default async function Home() {
     redirect("/login");
   }
 
-
-
   const user = await User.findOne({ email: session.user.email });
   if (!user) redirect("/login");
 
-  
   const isIncomplete =
     !user.mobile ||
     !user.role ||
@@ -38,11 +37,11 @@ export default async function Home() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       {/* ✅ Fixed Navbar */}
       <Nav user={plainUser} />
- <GeoUpdater userId={plainUser._id} />
+      <GeoUpdater userId={plainUser._id} />
       {/* ✅ Page Content */}
-      <main className="flex-grow pt-24 w-full">
+      <main className="grow pt-24 w-full">
         {user.role === "user" ? (
-          <UserDashboard />
+          <UserDashboard searchParams={props.searchParams} />
         ) : user.role === "admin" ? (
           <AdminDashboard />
         ) : (
