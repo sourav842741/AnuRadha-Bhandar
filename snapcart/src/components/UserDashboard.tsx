@@ -1,6 +1,8 @@
 import React from "react";
 import HeroSection from "./HeroSection";
 import CategorySlider from "./CategorySlider";
+import Banner from "@/models/banner.model";
+import OfferBanner from "./OfferBanner";
 import connectDb from "@/lib/db";
 import Grocery from "@/models/grocery.model";
 import GroceryItemCard from "./GroceryItemCard";
@@ -17,7 +19,7 @@ export default async function UserDashboard({ searchParams }: Props) {
 
   await connectDb();
 const resolvedSearch = await searchParams;
-
+const banner = await Banner.findOne({ isActive: true }).lean<any>();
  const categoryData = [
   { name: "Fruits & Vegetables", image: "/categories/fruits.png" },
   { name: "Dairy & Eggs", image: "/categories/dairy.png" },
@@ -90,6 +92,17 @@ if (resolvedSearch?.q) {
 <>
 
 <HeroSection/>
+
+{banner && (
+  <OfferBanner
+    title={banner.title}
+     discountText={banner.discountText}
+    minOrderAmount={banner.minOrderAmount}
+    image={banner.image}
+  />
+)}
+
+
 
 {/* 🔥 STICKY CATEGORY BAR */}
 <div className="px-4 sm:px-6 md:px-0 w-full md:w-[92%] mx-auto mt-6">

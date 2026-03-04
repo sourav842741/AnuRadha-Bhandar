@@ -4,6 +4,7 @@ import connectDb from "@/lib/db";
 import Order from "@/models/order.model";
 import User from "@/models/user.model";
 import { emitSocketEvent } from "@/lib/emitSocketEvent";
+import Coupon from "@/models/coupon.model";
 
 export async function POST(req: Request) {
 
@@ -13,8 +14,7 @@ export async function POST(req: Request) {
 
   const body = await req.json();
 
-  const { userId, items, totalAmount, paymentMethod, address } = body;
-
+const { userId, items, totalAmount, paymentMethod, address, couponCode } = body;
 
   if (!userId || !items?.length || !paymentMethod || !address) {
 
@@ -68,6 +68,34 @@ export async function POST(req: Request) {
   await User.findByIdAndUpdate(userId,{
    $push:{myOrders:newOrder._id}
   });
+
+  // ✅ Coupon usage decrease AFTER order created
+if (couponCode) {
+
+  const coupon = await Coupon.findOne({ code: couponCode });
+
+  if (coupon) {
+
+    // 🔒 Re-validation (important)
+    if (!coupon.isActive) {
+      throw new Error("Coupon is inactive");
+    }
+
+    if (coupon.expiryDate && new Date() > coupon.expiryDate) {
+      throw new Error("Coupon expired");
+    }
+
+    if (coupon.usageLimit <= 0) {
+      throw new Error("Coupon usage limit reached");
+    }
+
+    // ✅ Decrease usage count
+    await Coupon.updateOne(
+      { _id: coupon._id },
+      { $inc: { usageLimit: -1 } }
+    );
+  }
+}
 
 
   await newOrder.populate("user","name email");
