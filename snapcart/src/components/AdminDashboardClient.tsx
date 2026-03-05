@@ -143,6 +143,31 @@ export default function AdminDashboardClient({
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+        <a
+          href="/admin/flash-deal"
+          className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-xl text-center hover:shadow-lg transition"
+        >
+          <h3 className="font-bold">⚡ Flash Deals</h3>
+          <p className="text-sm opacity-90">Manage time-limited offers</p>
+        </a>
+        <a
+          href="/admin/banner"
+          className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-4 rounded-xl text-center hover:shadow-lg transition"
+        >
+          <h3 className="font-bold">🎨 Banners</h3>
+          <p className="text-sm opacity-90">Manage promotional banners</p>
+        </a>
+        <a
+          href="/admin/coupons"
+          className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 rounded-xl text-center hover:shadow-lg transition"
+        >
+          <h3 className="font-bold">🎟️ Coupons</h3>
+          <p className="text-sm opacity-90">Manage discount coupons</p>
+        </a>
+      </div>
     </section>
   );
 }

@@ -148,8 +148,6 @@ className="absolute top-20 right-6 flex items-center gap-2 text-white bg-black p
 Manage Banner
 </Link>
 
-
-
 <motion.div
 initial={{opacity:0,y:20}}
 animate={{opacity:1,y:0}}
