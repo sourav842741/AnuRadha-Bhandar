@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDb from "@/lib/db";
 import FlashDeal from "@/models/flashDeal.model";
 import { auth } from "@/auth";
+import "@/models/grocery.model";
 
 /* ======================
    ✅ GET ALL FLASH DEALS
