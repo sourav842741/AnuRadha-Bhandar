@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Zap, Loader2, X, Check } from "lucide-react";
+import { ArrowLeft, Zap, Loader2, X, Check, Edit2, Trash2 } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -48,6 +48,10 @@ export default function FlashDealAdminClient({ products }: { products: Product[]
   const [endTime, setEndTime] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Edit mode state
+  const [editingDeal, setEditingDeal] = useState<FlashDeal | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Existing flash deals
   const [flashDeals, setFlashDeals] = useState<FlashDeal[]>([]);
@@ -138,6 +142,91 @@ export default function FlashDealAdminClient({ products }: { products: Product[]
     });
   };
 
+  // Convert Date to datetime-local format
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toISOString().slice(0, 16);
+  };
+
+  // Handle edit click
+  const handleEditClick = (deal: FlashDeal) => {
+    setEditingDeal(deal);
+    setTitle(deal.title);
+    setStartTime(formatDateForInput(deal.startTime));
+    setEndTime(formatDateForInput(deal.endTime));
+    
+    // Extract product IDs from the deal
+    const productIds = deal.products.map((p) => p._id);
+    setSelectedProducts(productIds);
+    
+    setIsEditMode(true);
+    setShowDeals(false); // Switch to create form view
+  };
+
+  // Handle update
+  const handleUpdate = async () => {
+    if (!title || !startTime || !endTime || selectedProducts.length === 0) {
+      alert("Please fill all fields and select at least one product");
+      return;
+    }
+
+    if (new Date(startTime) >= new Date(endTime)) {
+      alert("End time must be after start time");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await axios.put(`/api/admin/flash-deal/${editingDeal?._id}`, {
+        title,
+        startTime,
+        endTime,
+        products: selectedProducts,
+      });
+
+      alert("Flash Deal Updated Successfully!");
+      
+      // Reset form and exit edit mode
+      resetForm();
+      
+      // Refresh deals
+      fetchFlashDeals();
+    } catch (error) {
+      console.error("Error updating flash deal:", error);
+      alert("Error updating flash deal");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async (dealId: string) => {
+    if (!confirm("Are you sure you want to delete this flash deal?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(`/api/admin/flash-deal/${dealId}`);
+      alert("Flash Deal Deleted Successfully!");
+      
+      // Refresh deals
+      fetchFlashDeals();
+    } catch (error) {
+      console.error("Error deleting flash deal:", error);
+      alert("Error deleting flash deal");
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setTitle("");
+    setStartTime("");
+    setEndTime("");
+    setSelectedProducts([]);
+    setEditingDeal(null);
+    setIsEditMode(false);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
@@ -224,6 +313,24 @@ export default function FlashDealAdminClient({ products }: { products: Product[]
                     <div className="mt-3 text-xs text-gray-400">
                       Created: {formatDate(deal.createdAt)}
                     </div>
+
+                    {/* Edit and Delete Buttons */}
+                    <div className="flex gap-2 mt-4 pt-3 border-t">
+                      <button
+                        onClick={() => handleEditClick(deal)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-blue-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600 transition"
+                      >
+                        <Edit2 size={14} />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(deal._id)}
+                        className="flex-1 flex items-center justify-center gap-1 bg-red-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition"
+                      >
+                        <Trash2 size={14} />
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -236,7 +343,7 @@ export default function FlashDealAdminClient({ products }: { products: Product[]
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow p-6 sticky top-4">
                 <h2 className="text-xl font-bold text-green-700 mb-4">
-                  Create New Deal
+                  {isEditMode ? "Edit Flash Deal" : "Create New Deal"}
                 </h2>
 
                 <div className="space-y-4">
@@ -289,23 +396,51 @@ export default function FlashDealAdminClient({ products }: { products: Product[]
                   </div>
 
                   {/* Submit Button */}
-                  <button
-                    onClick={handleSubmit}
-                    disabled={loading || selectedProducts.length === 0}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold flex justify-center items-center gap-2 disabled:opacity-50 hover:bg-green-700 transition"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      <>
-                        <Zap />
-                        Create Flash Deal
-                      </>
-                    )}
-                  </button>
+                  {isEditMode ? (
+                    <div className="space-y-2">
+                      <button
+                        onClick={handleUpdate}
+                        disabled={loading || selectedProducts.length === 0}
+                        className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold flex justify-center items-center gap-2 disabled:opacity-50 hover:bg-blue-700 transition"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          <>
+                            <Zap />
+                            Update Flash Deal
+                          </>
+                        )}
+                      </button>
+                      <button
+                        onClick={resetForm}
+                        className="w-full bg-gray-500 text-white py-2 rounded-lg font-semibold hover:bg-gray-600 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleSubmit}
+                      disabled={loading || selectedProducts.length === 0}
+                      className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold flex justify-center items-center gap-2 disabled:opacity-50 hover:bg-green-700 transition"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <Zap />
+                          Create Flash Deal
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
