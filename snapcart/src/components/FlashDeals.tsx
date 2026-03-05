@@ -154,9 +154,17 @@ export default function FlashDeals() {
       try {
         const res = await fetch("/api/flash-deal");
         const data = await res.json();
-        setFlashDeals(data);
+        
+        // Handle both successful array response and error object response
+        if (Array.isArray(data)) {
+          setFlashDeals(data);
+        } else {
+          console.error("Error fetching flash deals:", data.message);
+          setFlashDeals([]);
+        }
       } catch (error) {
         console.error("Error fetching flash deals:", error);
+        setFlashDeals([]);
       } finally {
         setLoading(false);
       }
