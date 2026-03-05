@@ -10,6 +10,7 @@ import {
   Package,
   UserCheck,
   Phone,
+   Download,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
@@ -22,6 +23,10 @@ export default function OrderCard({ order }: OrderCardProps) {
   const date = new Date(order.createdAt).toLocaleString();
   const [expanded, setExpanded] = useState(false);
   const router = useRouter();
+
+  const downloadInvoice = () => {
+  window.open(`/api/admin/order/invoice/${order._id}`, "_blank");
+};
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -187,20 +192,40 @@ export default function OrderCard({ order }: OrderCardProps) {
           </motion.div>
         </div>
 
-        {/* Total */}
-        <div className="border-t pt-3 flex justify-between items-center text-sm font-semibold text-gray-800">
-          <div className="flex items-center gap-2 text-gray-700 text-sm">
-            <Truck size={16} className="text-green-600" />
-            <span>Delivery: {order.status}</span>
-          </div>
-          <div>
-            Total:{" "}
-            <span className="text-green-700 font-bold">
-              ₹{order.totalAmount}
-            </span>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
+       {/* Order Summary */}
+<div className="border-t pt-4 mt-3 space-y-3">
+
+  {/* Delivery + Total Row */}
+  <div className="flex justify-between items-center">
+
+    <div className="flex items-center gap-2 text-gray-700 text-sm">
+      <Truck size={16} className="text-green-600" />
+      <span className="px-2 py-1 rounded-md bg-green-100 text-green-700 capitalize">
+        {order.status}
+      </span>
+    </div>
+
+    <div className="text-right">
+      <p className="text-xs text-gray-500">Total Amount</p>
+      <p className="text-lg font-bold text-green-700">
+        ₹{order.totalAmount}
+      </p>
+    </div>
+
+  </div>
+
+  {/* Download Invoice Button */}
+ <button
+  onClick={downloadInvoice}
+  className="w-full flex items-center justify-center gap-2 bg-linear-to-r from-green-600 to-green-300 text-white font-semibold px-4 py-3 rounded-xl shadow-md hover:from-green-700 hover:to-green-600 transition-all duration-200"
+>
+  <Download size={18} />
+  Download Invoice
+</button>
+
+</div>
+
+</div>
+</motion.div>
+);
 }
