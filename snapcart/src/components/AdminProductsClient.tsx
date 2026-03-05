@@ -25,6 +25,7 @@ price:string;
 mrp:string;
 unit:string;
 image:string;
+description?:string;
 
 }
 
@@ -486,6 +487,20 @@ className="border p-3 w-full mb-3 rounded-lg"
 ))}
 
 </select>
+
+
+
+{/* Description Textarea */}
+<textarea
+value={editing.description || ""}
+onChange={(e)=>setEditing({...editing,description:e.target.value})}
+placeholder="Product Description (optional)"
+rows={3}
+className="border p-3 w-full mb-3 rounded-lg resize-none"
+/>
+<p className="text-xs text-gray-500 mb-3">
+  If left empty, AI will automatically generate a description on save.
+</p>
 
 
 

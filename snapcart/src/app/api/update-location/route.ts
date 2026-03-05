@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   await connectDb();
 
-  const { userId, location } = await req.json();
+  const { userId, location, address } = await req.json();
 
   if (!userId || !location) {
     return NextResponse.json(
@@ -14,14 +14,23 @@ export async function POST(req: Request) {
     );
   }
 
+  // Build update object
+  const updateData: { location: any; address?: any } = { location };
+  
+  // If address is provided, include it in the update
+  if (address) {
+    updateData.address = address;
+  }
+
   const user = await User.findByIdAndUpdate(
     userId,
-    { location },
+    updateData,
     { new: true }
   );
 
   return NextResponse.json({
     success: true,
     location: user.location,
+    address: user.address,
   });
 }

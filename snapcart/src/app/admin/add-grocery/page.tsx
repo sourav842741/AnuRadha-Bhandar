@@ -3,7 +3,7 @@
 import React, { FormEvent, useState } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { Upload, PlusCircle, Loader2, ArrowLeft } from "lucide-react";
+import { Upload, PlusCircle, Loader2, ArrowLeft, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -29,11 +29,13 @@ const [category,setCategory]=useState("");
 const [price,setPrice]=useState("");
 const [actualPrice,setActualPrice]=useState("");
 const [unit,setUnit]=useState("piece");
+const [description,setDescription]=useState("");
 
 const [image,setImage]=useState<File|null>(null);
 const [preview,setPreview]=useState<string|null>(null);
 
 const [loading,setLoading]=useState(false);
+const [isGeneratingAI,setIsGeneratingAI]=useState(false);
 
 
 /* Upload Image */
@@ -76,6 +78,11 @@ formdata.append("price",price);
 /* ✅ IMPORTANT FIX */
 formdata.append("mrp",actualPrice);
 
+// Add description to formdata
+if(description){
+  formdata.append("description",description);
+}
+
 if(image){
 
 formdata.append("file",image);
@@ -90,6 +97,7 @@ setName("");
 setCategory("");
 setPrice("");
 setActualPrice("");
+setDescription("");
 setPreview(null);
 setImage(null);
 
@@ -278,6 +286,24 @@ className="rounded-xl"
 />
 
 )}
+
+
+
+{/* Description Textarea */}
+
+<div className="flex flex-col gap-2">
+  <textarea
+    placeholder="Product Description (optional)"
+    value={description}
+    onChange={(e)=>setDescription(e.target.value)}
+    rows={4}
+    className="border p-3 rounded-xl w-full resize-none"
+  />
+  <p className="text-sm text-gray-500 flex items-center gap-1">
+    <Sparkles className="w-4 h-4 text-green-500" />
+    If left empty, AI will automatically generate a product description.
+  </p>
+</div>
 
 
 

@@ -8,6 +8,7 @@ interface IGrocery {
   mrp: string;
   unit: string;
   image: string;
+  description?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -54,6 +55,11 @@ default:"piece"
 },
 
 image:{
+type:String,
+default:""
+},
+
+description:{
 type:String,
 default:""
 }

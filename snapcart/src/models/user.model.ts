@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-interface IUser {
+export interface IUser {
   _id?: mongoose.Types.ObjectId ;
   name: string;
   role: "admin" | "user" | "deliveryBoy";
@@ -13,6 +13,13 @@ interface IUser {
   updatedAt?: Date;
   socketId?:string
   isOnline:Boolean
+  // User's current location address (text address)
+  address?: {
+    fullAddress?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+  };
   location?: {
     type: {
         type: string;
@@ -60,6 +67,13 @@ const userSchema = new mongoose.Schema<IUser>(
         ref: "Order",
       },
     ],
+    // User's current location address
+    address: {
+      fullAddress: { type: String, default: "" },
+      city: { type: String, default: "" },
+      state: { type: String, default: "" },
+      pincode: { type: String, default: "" },
+    },
     location:{
 type:{type:String,enum:['Point'],default:'Point'},
 coordinates:{type:[Number],default:[0,0]}

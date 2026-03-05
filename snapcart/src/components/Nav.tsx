@@ -12,6 +12,7 @@ import {
   Truck,
   Boxes,
   X,
+  MapPin,
 } from "lucide-react";
 import Image from "next/image";
 import React, { useState, useRef, useEffect } from "react";
@@ -23,6 +24,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/redux/store";
 import { createPortal } from "react-dom";
 import { ShoppingBasket } from "lucide-react";
+import LocationDetector, { useLocation } from "./LocationDetector";
 
 interface IUser {
   _id?: mongoose.Types.ObjectId;
@@ -41,6 +43,9 @@ function Nav({ user }: { user: IUser }) {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { cartData } = useSelector((state: RootState) => state.cart);
+  
+  // Get location from localStorage
+  const { location } = useLocation();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -174,25 +179,22 @@ function Nav({ user }: { user: IUser }) {
 
   return (
     <>
-<nav className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2
-bg-gradient-to-r from-green-500/70 to-green-700/70
-backdrop-blur-xl
-border border-white/20
-rounded-2xl
-shadow-xl shadow-black/25
-flex justify-between items-center
-h-20 px-4 md:px-8
-z-50">        {/* Logo */}
-       <Link
-  href="/"
-  className="flex items-center gap-2 text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform"
->
+      <nav className="w-[95%] fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-green-500/70 to-green-700/70 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl shadow-black/25 flex justify-between items-center h-20 px-4 md:px-8 z-50">
+        {/* Logo */}
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-white font-extrabold text-2xl sm:text-3xl tracking-wide hover:scale-105 transition-transform"
+        >
+          <ShoppingBasket size={28} />
+          Anuradha Bhandar
+        </Link>
 
-<ShoppingBasket size={28} />
-
-Anuradha Bhandar
-
-</Link>
+        {/* Location Detector - Only for logged in users */}
+        {isUser && (
+          <div className="hidden md:block">
+            <LocationDetector />
+          </div>
+        )}
 
         {/* Search (User - Desktop) */}
         {isUser && (

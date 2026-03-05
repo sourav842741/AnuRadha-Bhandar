@@ -1,5 +1,6 @@
 import connectDb from "@/lib/db";
 import Grocery from "@/models/grocery.model";
+import User from "@/models/user.model";
 import GroceryItemCard from "@/components/GroceryItemCard";
 import NoProductsFound from "@/components/NoProductsFound";
 import Nav from "@/components/Nav";
@@ -21,6 +22,17 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const categoryName = decodeURIComponent(resolvedParams.name);
 
   await connectDb();
+
+  // Fetch full user data from database for Nav
+  let navUser = null;
+  if (session?.user?.email) {
+    const dbUser = await User.findOne({ email: session.user.email })
+      .select("name role image email mobile")
+      .lean();
+    if (dbUser) {
+      navUser = JSON.parse(JSON.stringify(dbUser));
+    }
+  }
 
   // 🔥 SORT LOGIC
   let sortOption: any = {};
@@ -58,7 +70,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <>
-      {session?.user?.name && <Nav user={session.user as any} />}
+      {navUser && <Nav user={navUser} />}
 
       <section className="w-[90%] md:w-[80%] mx-auto mt-32 mb-16">
         {/* Back Button */}

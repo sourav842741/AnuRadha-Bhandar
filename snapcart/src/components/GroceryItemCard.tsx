@@ -10,6 +10,7 @@ addToCart,
 increaseQuantity,
 decreaseQuantity
 } from "@/redux/cartSlice";
+import Link from "next/link";
 
 interface GroceryItemCardProps {
 
@@ -60,10 +61,9 @@ Number(mrp))*100
 
 :0;
 
-
-
 return(
 
+<Link href={`/product/${_id}`}>
 <motion.div
 
 initial={{opacity:0,scale:0.9}}
@@ -275,6 +275,7 @@ dispatch(increaseQuantity(_id))
 </div>
 
 </motion.div>
+</Link>
 
 )
 

@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import uploadOnCloudinary from "@/lib/cloudinary";
 import connectDb from "@/lib/db";
+import { generateProductDescription } from "@/lib/gemini";
 import Grocery from "@/models/grocery.model";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -27,6 +28,25 @@ export async function POST(req: NextRequest) {
     /* ✅ IMPORTANT */
     const mrp = formData.get("mrp") as string;
 
+    // Get description from form data
+    let description = formData.get("description") as string | null;
+
+    // If description is empty or not provided, generate with Gemini AI
+    if (!description || description.trim() === "") {
+      console.log("🔄 Generating AI description for:", name);
+      const aiResult = await generateProductDescription(name, category);
+      if (aiResult.success && aiResult.description) {
+        description = aiResult.description;
+        console.log("✅ AI generated description:", description);
+      } else {
+        console.warn("❌ AI description generation failed, using fallback:", aiResult.error);
+        // Fallback description as requested
+        description = "Fresh and high-quality grocery item perfect for daily cooking.";
+      }
+    }
+
+    console.log("💾 Final description to save:", description);
+
     const file = formData.get("file") as Blob | null;
 
     let imageUrl: string | null = "";
@@ -42,6 +62,7 @@ export async function POST(req: NextRequest) {
       price,
       mrp, // ✅ THIS WAS MISSING
       image: imageUrl,
+      description: description || "",
     });
 
     return NextResponse.json(grocery, { status: 200 });
